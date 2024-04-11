@@ -1,5 +1,6 @@
 #!/bin/python3
-from picamera2 import Picamera2, Preview
+import time
+from picamera2 import Picamera2
 
 OUTPUT_FOLDER = "/var/www/html/"
 
@@ -8,8 +9,13 @@ print("Content-type: application/json")
 print()
 
 cam = Picamera2()
-cam.start_preview(Preview.NULL)
+config = cam.create_still_configuration()
+cam.configure(config)
 
-cam.start_and_capture_file(OUTPUT_FOLDER + "snapshot.jpg")
+cam.start_preview(False) # Shorthand for using Preview.NULL
+
+cam.start()
+time.sleep(2) # Gives system time to auto change focus, brightness, etc.
+cam.capture_file(OUTPUT_FOLDER + "snapshot.jpg")
 
 print({"file": "snapshot.json"})

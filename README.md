@@ -41,6 +41,11 @@ Landing page. Displays `/snapshot.jpg` and provides a button to take a new snaps
 
 Takes a picture with the Pi Camera and saves it as `/snapshot.jpg` (overwritting the old snapshot).
 
+## Helpful Dev Docs
+
+* [Raspberry Pi Camera software docs](https://www.raspberrypi.com/documentation/computers/camera_software.html#python-bindings-for-libcamera) (libcamera)
+* [The Picamera2 Library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf) (use libcamera in Python)
+
 ## TODO
 
 [This article](https://forum.arducam.com/t/how-to-make-libcamera-still-faster/4898/7) seems to imply that the camera will operate much faster when used within a script. Setup the camera configuration once at beginning (~1 sec), then leave program running so configuration doesn't have to occur again. (How to make this work like an API if it's constantly running?)
@@ -48,3 +53,14 @@ Takes a picture with the Pi Camera and saves it as `/snapshot.jpg` (overwritting
 Python camera API [examples](https://github.com/ArduCAM/picamera2_examples/tree/main).
 
 Possible [answer](https://www.raspberrypi.com/documentation/computers/camera_software.html#network-streaming) to all my future streaming problems??
+
+## Requirements
+
+Necessary apt packages:
+
+```
+apache2
+libcamera  # Should already be installed for Raspbian OS
+python3-picamera  # Install with --no-install recommends
+ffmpeg
+```
