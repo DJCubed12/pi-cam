@@ -5,10 +5,10 @@ echo ""
 
 echo "<p>Folder: $(pwd)</p>"
 
-libcamera-still -o "generated/temp.jpg"
+libcamera-still -o "/var/www/generated/temp.jpg"
 
 echo "<p>Contents:</p>"
-echo "<p>$(ls)</p>"
+echo "<p>$(ls /var/www/generated)</p>"
 
 echo ""
 
