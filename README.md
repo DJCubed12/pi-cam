@@ -45,6 +45,8 @@ Takes a picture with the Pi Camera and saves it as `/snapshot.jpg` (overwritting
 
 * [Raspberry Pi Camera software docs](https://www.raspberrypi.com/documentation/computers/camera_software.html#python-bindings-for-libcamera) (libcamera)
 * [The Picamera2 Library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf) (use libcamera in Python)
+  * [picamera](https://github.com/raspberrypi/picamera2/tree/main) (Github)
+  * [Picamera2 examples](https://github.com/ArduCAM/picamera2_examples/tree/main)
 
 ## TODO
 
