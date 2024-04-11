@@ -6,6 +6,15 @@ This is a Raspberry Pi Security Camera.
 
 This project uses Apache. Make sure it is installed (`sudo apt install apache2`).
 
+This project makes use of CGI scripts. Raspbian is a flavor of Debian, which requires Apache CGI scripts to be enabled as so:
+
+```bash
+sudo a2enconf serve-cgi-bin
+sudo a2enmod cgid
+```
+
+__Note: In Debian the cgi-bin is stored in /usr/lib.__
+
 When Apache is running it uses a user named `www-data` to serve files and run CGI scripts. `www-data` will need to run CGI scripts that access `/dev/media#`, requiring `www-data` to be in the `video` group.
 
 ```bash
