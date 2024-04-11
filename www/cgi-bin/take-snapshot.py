@@ -1,3 +1,4 @@
+#!/bin/python3
 from picamera2 import Picamera2
 
 OUTPUT_FOLDER = "/var/www/html/"
