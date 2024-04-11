@@ -3,19 +3,32 @@
 	<head>
 		<title>Pi-Cam</title>
 	</head>
-	
+
 	<body>
 		<h1>Raspberry Pi Security Camera!</h1>
-		<p>
-		  <button onclick="takeSnapshot()">Record (2 seconds)</button>
-		  (this is slow and will take a second)
-    </p>
+		<button onclick="record()">Record</button>
+
+		<div>
+			Video length:
+			<input id="lengthSlider" type="range" min="2" max="30" value="5">
+			<p id="lengthDisplay">(5 sec)</p>
+		</div>
+
 		<video src="/video.mp4" alt="No video taken yet" width="600">
 	</body>
 
 	<script>
-    function takeSnapshot() {
-      fetch('/cgi-bin/take-video.py').then((res) => location.reload());
+		"use strict";
+
+		let slider = document.getElementById("lengthSlider");
+		let sliderDisplay = document.getElementById("lengthDisplay");
+		slider.oninput = function() {
+			sliderDisplay.innerHTML = '(' + this.value + ' sec)'
+		}
+
+    function record() {
+      fetch('/cgi-bin/take-video.py?length=' + slider.value)
+				.then((res) => location.reload());
     }
 	</script>
 </html>
