@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Pi-Cam</title>
+	</head>
+	
+	<body>
+		<h1>Raspberry Pi Security Camera!</h1>
+		<p>
+		  <button onclick="takeSnapshot()">Record (2 seconds)</button>
+		  (this is slow and will take a second)
+    </p>
+		<video src="/video.mp4" alt="No video taken yet" width="600">
+	</body>
+
+	<script>
+    function takeSnapshot() {
+      fetch('/cgi-bin/take-video.py').then((res) => location.reload());
+    }
+	</script>
+</html>
