@@ -11,10 +11,12 @@
 		<div>
 			Video length:
 			<input id="lengthSlider" type="range" min="2" max="30" value="5">
-			<p id="lengthDisplay">(5 sec)</p>
+			<span id="lengthDisplay">(5 sec)</span>
 		</div>
 
-		<video src="/video.mp4" alt="No video taken yet" width="600">
+		<video src="/video.mp4" type="video/mp4" width="600" autoplay muted controls>
+      Your browser does not support the HTML video tag.
+		</video>
 	</body>
 
 	<script>
