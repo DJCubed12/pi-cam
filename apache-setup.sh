@@ -14,4 +14,8 @@ fi
 cp -r www/cgi-bin /usr/lib
 chmod -R u=rwx,go=rx /usr/lib/cgi-bin
 
+# Allow CGI scripts to generate files and store them here:
+mkdir /usr/lib/cgi-bin/generated
+chown www-data /usr/lib/cgi-bin/generated
+
 systemctl start apache2
