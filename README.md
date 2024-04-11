@@ -13,7 +13,7 @@ sudo a2enconf serve-cgi-bin
 sudo a2enmod cgid
 ```
 
-__Note: In Debian the cgi-bin is stored in /usr/lib.__
+_Note: In Debian the cgi-bin is stored in /usr/lib._
 
 When Apache is running it uses a user named `www-data` to serve files and run CGI scripts. `www-data` will need to run CGI scripts that access `/dev/media#`, requiring `www-data` to be in the `video` group.
 
@@ -28,3 +28,19 @@ The `apache-setup.sh` script will do the rest:
 * Start apache2.service
 
 Be sure to run it with sudo.
+
+## Documentation
+
+The following paths are referring to URL endpoints.
+
+### `/index.html`
+
+Landing page. Displays `/snapshot.jpg` and provides a button to take a new snapshot using `/cgi-bin/take-snapshot.sh`.
+
+### `/cgi-bin/take-snapshot.sh`
+
+Takes a picture with the Pi Camera and saves it as `/snapshot.jpg` (overwritting the old snapshot).
+
+## TODO
+
+[This article](https://forum.arducam.com/t/how-to-make-libcamera-still-faster/4898/7) seems to imply that the camera will operate much faster when used within a script. Setup the camera configuration once at beginning (~1 sec), then leave program running so configuration doesn't have to occur again. (How to make this work like an API if it's constantly running?)
