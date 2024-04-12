@@ -1,9 +1,14 @@
 #!/bin/python3
 import cgi
+import os
 from picamera2 import Picamera2
 
 OUTPUT_FOLDER = "/var/www/html/"
 VIDEO_LENGTH_RANGE = (2, 30)
+
+# Quiet libcamera's logging, dear lord
+Picamera2.set_logging(Picamera2.ERROR)
+os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
 
 # Apache CGI header
 print("Content-type: application/json")
