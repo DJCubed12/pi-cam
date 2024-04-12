@@ -15,7 +15,7 @@ videoLen = 2
 args = cgi.FieldStorage()
 if "length" in args:
     try:
-        lengthArg = int(args["length"])
+        lengthArg = int(args["length"].value)
     except ValueError:
         pass
 
