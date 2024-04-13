@@ -15,4 +15,7 @@ fi
 cp -r www/cgi-bin /usr/lib
 chmod -R u=rwx,go=rx /usr/lib/cgi-bin
 
+# Add No-Cache headers to all requests
+cp .htaccess /etc/apache2
+
 systemctl start apache2
