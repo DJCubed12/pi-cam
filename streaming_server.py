@@ -49,6 +49,14 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
         elif self.path == "/index.html":
             self._index()
+        # elif self.path == "/start-rec":
+        #     recordingOutput.fileoutput = "playback.mjpg"
+        #     recordingOutput.start()
+
+        #     self.send_response(200)
+        #     self.end_headers()
+        # elif self.path == "/end-rec":
+        #     self._playback()
         elif self.path == "/stream.mjpg":
             self._livestream()
         else:
@@ -63,6 +71,21 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
+    # def _playback(self):
+    #     recordingOutput.stop()  # Check if it actually is recording first
+
+    #     with open("playback.mjpg", "rb") as file:
+    #         data = file.read()
+
+    #     self.send_response(200)
+    #     self.send_header("Age", 0)
+    #     self.send_header("Cache-Control", "no-cache, private")
+    #     self.send_header("Pragma", "no-cache")
+    #     self.send_header("Content-Type", "video/x-motion-jpeg")
+    #     self.send_header("Content-Length", len(data))
+    #     self.end_headers()
+    #     self.wfile.write(data)
+
     def _livestream(self):
         self.send_response(200)
         self.send_header("Age", 0)
@@ -72,9 +95,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.end_headers()
         try:
             while True:
-                with output.condition:
-                    output.condition.wait()
-                    frame = output.frame
+                with livestream.condition:
+                    livestream.condition.wait()
+                    frame = livestream.frame
                 self.wfile.write(b"--FRAME\r\n")
                 self.send_header("Content-Type", "image/jpeg")
                 self.send_header("Content-Length", len(frame))
@@ -93,13 +116,20 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 cam = Picamera2()
-cam.configure(cam.create_video_configuration(main={"size": SIZE}))
-output = StreamingOutput()
-cam.start_recording(JpegEncoder(), FileOutput(output))
+cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
+
+livestream = FileOutput(StreamingOutput())
+# recordingOutput = FileOutput()
+encoder = JpegEncoder()
+encoder.output = [livestream]  # , recordingOutput]
+
+cam.start_encoder(encoder)
+cam.start()
 
 try:
     address = ("", PORT)
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 finally:
-    cam.stop_recording()
+    # TODO: stop any ongoing recordings first
+    cam.stop()
