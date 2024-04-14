@@ -62,8 +62,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == "/index.html":
             self._index()
         elif self.path == "/start-rec":
-            recordingOutput.fileoutput = "playback.mp4"
             recordingOutput.start()
+            encoder.output.append(recordingOutput)
 
             self.send_response(200)
             self.end_headers()
@@ -95,6 +95,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
+        encoder.output.remove(recordingOutput)  # Is this gonna break something?
         recordingOutput.stop()  # Check if it actually is recording first
 
         with open("playback.mp4", "rb") as file:
@@ -141,11 +142,11 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
-recordingOutput = FfmpegOutput()
+recordingOutput = FfmpegOutput("playback.mp4")
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
 encoder = MJPEGEncoder()
-encoder.output = [livestream, recordingOutput]
+encoder.output = [livestream]
 
 cam.start_encoder(encoder)
 cam.start()
