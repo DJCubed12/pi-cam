@@ -11,8 +11,8 @@ from http import server
 from threading import Condition
 
 from picamera2 import Picamera2
-from picamera2.encoders import MJPEGEncoder
-from picamera2.outputs import FileOutput, H264Output
+from picamera2.encoders import MJPEGEncoder, H264Encoder
+from picamera2.outputs import FileOutput
 
 PORT = 8000
 SIZE = (720, 480)
@@ -62,8 +62,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == "/index.html":
             self._index()
         elif self.path == "/start-rec":
-            recordingOutput.fileoutput = "playback.h264"
-            recordingOutput.start()
+            cam.start(recordingEncoder, "playback.h264", name="lores")
 
             self.send_response(200)
             self.end_headers()
@@ -95,7 +94,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
-        recordingOutput.stop()  # Check if it actually is recording first
+        cam.stop_encoder(recordingEncoder)  # Check if it actually is recording first
 
         with open("playback.h264", "rb") as file:
             data = file.read()
@@ -141,19 +140,16 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
+recordingEncoder = H264Encoder()
+
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
-recordingOutput = H264Output()
-encoder = MJPEGEncoder()
-encoder.output = [livestream, recordingOutput]
-
-cam.start_encoder(encoder)
-cam.start()
+livestreamEncoder = MJPEGEncoder()
+cam.start_recording(livestreamEncoder, livestream)
 
 try:
     address = ("", PORT)
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 finally:
-    # TODO: stop any ongoing recordings first
-    cam.stop()
+    cam.stop_recording()
