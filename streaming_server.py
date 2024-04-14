@@ -11,7 +11,7 @@ from http import server
 from threading import Condition
 
 from picamera2 import Picamera2
-from picamera2.encoders import MJPEGEncoder
+from picamera2.encoders import MJPEGEncoder, H264Encoder
 from picamera2.outputs import FileOutput, FfmpegOutput
 
 PORT = 8000
@@ -63,14 +63,13 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self._index()
         elif self.path == "/start-rec":
             recordingOutput.start()
-            encoder.output = [encoder.output, recordingOutput]
+            mainEncoder.output = recordingOutput
 
             self.send_response(200)
             self.end_headers()
         elif self.path == "/stop-rec":
+            cam.stop_encoder(mainEncoder)
             recordingOutput.stop()
-            encoder.output.remove(recordingOutput)
-            #recordingOutput.stop()
 
             self.send_response(200)
             self.end_headers()
@@ -102,8 +101,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
-        #encoder.output.remove(recordingOutput)  # Is this gonna break something?
-        #recordingOutput.stop()  # Check if it actually is recording first
+        # encoder.output.remove(recordingOutput)  # Is this gonna break something?
+        # recordingOutput.stop()  # Check if it actually is recording first
 
         with open("playback.mp4", "rb") as file:
             data = file.read()
@@ -150,12 +149,15 @@ cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
 recordingOutput = FfmpegOutput("playback.mp4")
+mainEncoder = H264Encoder()
+
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
-encoder = MJPEGEncoder()
-encoder.output = [livestream]
+loresEncoder = MJPEGEncoder()
+loresEncoder.output = [livestream]
 
-cam.start_encoder(encoder)
+cam.start_encoder(mainEncoder, name="main")
+cam.start_encoder(loresEncoder, name="lores")
 cam.start()
 
 try:
