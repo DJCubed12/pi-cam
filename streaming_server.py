@@ -63,7 +63,14 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self._index()
         elif self.path == "/start-rec":
             recordingOutput.start()
-            encoder.output.append(recordingOutput)
+            encoder.output = [encoder.output, recordingOutput]
+
+            self.send_response(200)
+            self.end_headers()
+        elif self.path == "/stop-rec":
+            recordingOutput.stop()
+            encoder.output.remove(recordingOutput)
+            #recordingOutput.stop()
 
             self.send_response(200)
             self.end_headers()
@@ -95,8 +102,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
-        encoder.output.remove(recordingOutput)  # Is this gonna break something?
-        recordingOutput.stop()  # Check if it actually is recording first
+        #encoder.output.remove(recordingOutput)  # Is this gonna break something?
+        #recordingOutput.stop()  # Check if it actually is recording first
 
         with open("playback.mp4", "rb") as file:
             data = file.read()
