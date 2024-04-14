@@ -141,9 +141,9 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
+recordingOutput = FfmpegOutput()
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
-recordingOutput = FfmpegOutput()
 encoder = MJPEGEncoder()
 encoder.output = [livestream, recordingOutput]
 
@@ -155,5 +155,5 @@ try:
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 finally:
-    # TODO: stop any ongoing recordings first
+    # TODO: Stop all current recordings first
     cam.stop()
