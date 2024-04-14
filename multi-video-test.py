@@ -3,7 +3,7 @@ import time
 LENGTH = 10
 
 from picamera2 import Picamera2
-from picamera2.encoders import H264Encoder, MJPEGEncoder
+from picamera2.encoders import H264Encoder
 from picamera2.outputs import FfmpegOutput
 
 cam = Picamera2()
@@ -15,7 +15,7 @@ cam.configure(config)
 mainOutput = FfmpegOutput("test-main.mp4")
 loresOutput = FfmpegOutput("test-lores.mp4")
 mainEncoder = H264Encoder()
-loresEncoder = MJPEGEncoder()
+loresEncoder = H264Encoder()
 
 cam.start_encoder(mainEncoder, name="main")
 cam.start_encoder(loresEncoder, name="lores")
