@@ -15,7 +15,7 @@ from picamera2.encoders import JpegEncoder
 from picamera2.outputs import FileOutput
 
 PORT = 8000
-SIZE = (1920, 1080)
+SIZE = (720, 480)
 
 PAGE = f"""\
 <html>

@@ -34,7 +34,7 @@ Be sure to run it with sudo.
 Run with:
 
 ```bash
-python mjpeg_server.py &
+python streaming_server.py &
 ```
 
 ## Documentation
