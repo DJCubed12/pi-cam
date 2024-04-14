@@ -12,7 +12,7 @@ from threading import Condition
 
 from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder
-from picamera2.outputs import FileOutput
+from picamera2.outputs import FileOutput, FfmpegOutput
 
 PORT = 8000
 SIZE = (720, 480)
@@ -36,7 +36,7 @@ PLAYBACK_PAGE = f"""\
 </head>
 <body>
 <h1>Raspberry Pi Security Camera!</h1>
-<video src="playback.mjpg" width="{SIZE[0]}" height="{SIZE[1]}" />
+<video src="playback.mp4" width="{SIZE[0]}" height="{SIZE[1]}" />
 </body>
 </html>
 """
@@ -62,14 +62,14 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == "/index.html":
             self._index()
         elif self.path == "/start-rec":
-            recordingOutput.fileoutput = "playback.mjpg"
+            recordingOutput.fileoutput = "playback.mp4"
             recordingOutput.start()
 
             self.send_response(200)
             self.end_headers()
         elif self.path == "/playback.html":
             self._playback()
-        elif self.path == "/playback.mjpg":
+        elif self.path == "/playback.mp4":
             self._playback_video()
         elif self.path == "/stream.mjpg":
             self._livestream()
@@ -97,14 +97,14 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
     def _playback_video(self):
         recordingOutput.stop()  # Check if it actually is recording first
 
-        with open("playback.mjpg", "rb") as file:
+        with open("playback.mp4", "rb") as file:
             data = file.read()
 
         self.send_response(200)
         self.send_header("Age", 0)
         self.send_header("Cache-Control", "no-cache, private")
         self.send_header("Pragma", "no-cache")
-        self.send_header("Content-Type", "video/x-motion-jpeg")
+        self.send_header("Content-Type", "video/mp4")
         self.send_header("Content-Length", len(data))
         self.end_headers()
         self.wfile.write(data)
@@ -143,7 +143,7 @@ cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size":
 
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
-recordingOutput = FileOutput()
+recordingOutput = FfmpegOutput()
 encoder = MJPEGEncoder()
 encoder.output = [livestream, recordingOutput]
 
