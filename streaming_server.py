@@ -4,6 +4,8 @@
 # Run this script, then point a web browser at http:<this-ip-address>:8000
 # Note: needs simplejpeg to be installed (pip3 install simplejpeg).
 
+import os
+
 import io
 import logging
 import socketserver
@@ -71,8 +73,13 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             cam.stop_encoder(mainEncoder)
             recordingOutput.stop()
 
+            dirContents = str(os.listdir()).encode("utf-8")
+
             self.send_response(200)
             self.end_headers()
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", len(dirContents))
+            self.wfile.write(dirContents)
         elif self.path == "/playback.html":
             self._playback()
         elif self.path == "/playback.mp4":
