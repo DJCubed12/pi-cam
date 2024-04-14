@@ -14,14 +14,17 @@ from picamera2 import Picamera2
 from picamera2.encoders import JpegEncoder
 from picamera2.outputs import FileOutput
 
-PAGE = """\
+PORT = 8000
+SIZE = (1920, 1080)
+
+PAGE = f"""\
 <html>
 <head>
 <title>Pi-Cam</title>
 </head>
 <body>
 <h1>Raspberry Pi Security Camera!</h1>
-<img src="stream.mjpg" width="640" height="480" />
+<img src="stream.mjpg" width="{SIZE[0]}" height="{SIZE[1]}" />
 </body>
 </html>
 """
@@ -90,12 +93,12 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 cam = Picamera2()
-cam.configure(cam.create_video_configuration(main={"size": (640, 480)}))
+cam.configure(cam.create_video_configuration(main={"size": SIZE}))
 output = StreamingOutput()
 cam.start_recording(JpegEncoder(), FileOutput(output))
 
 try:
-    address = ("", 8000)
+    address = ("", PORT)
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 finally:
