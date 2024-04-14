@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
-# THE FOLLOWING IS COPIED FROM https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
-
-# Mostly copied from https://picamera.readthedocs.io/en/release-1.13/recipes2.html
+# Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
 # Run this script, then point a web browser at http:<this-ip-address>:8000
 # Note: needs simplejpeg to be installed (pip3 install simplejpeg).
 
@@ -19,10 +17,10 @@ from picamera2.outputs import FileOutput
 PAGE = """\
 <html>
 <head>
-<title>picamera2 MJPEG streaming demo</title>
+<title>Pi-Cam</title>
 </head>
 <body>
-<h1>Picamera2 MJPEG Streaming Demo</h1>
+<h1>Raspberry Pi Security Camera!</h1>
 <img src="stream.mjpg" width="640" height="480" />
 </body>
 </html>
@@ -42,42 +40,48 @@ class StreamingOutput(io.BufferedIOBase):
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/':
+        if self.path == "/":
             self.send_response(301)
-            self.send_header('Location', '/index.html')
+            self.send_header("Location", "/index.html")
             self.end_headers()
-        elif self.path == '/index.html':
-            content = PAGE.encode('utf-8')
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Content-Length', len(content))
-            self.end_headers()
-            self.wfile.write(content)
-        elif self.path == '/stream.mjpg':
-            self.send_response(200)
-            self.send_header('Age', 0)
-            self.send_header('Cache-Control', 'no-cache, private')
-            self.send_header('Pragma', 'no-cache')
-            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
-            self.end_headers()
-            try:
-                while True:
-                    with output.condition:
-                        output.condition.wait()
-                        frame = output.frame
-                    self.wfile.write(b'--FRAME\r\n')
-                    self.send_header('Content-Type', 'image/jpeg')
-                    self.send_header('Content-Length', len(frame))
-                    self.end_headers()
-                    self.wfile.write(frame)
-                    self.wfile.write(b'\r\n')
-            except Exception as e:
-                logging.warning(
-                    'Removed streaming client %s: %s',
-                    self.client_address, str(e))
+        elif self.path == "/index.html":
+            self._index()
+        elif self.path == "/stream.mjpg":
+            self._livestream()
         else:
             self.send_error(404)
             self.end_headers()
+
+    def _index(self):
+        content = PAGE.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Content-Length", len(content))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _livestream(self):
+        self.send_response(200)
+        self.send_header("Age", 0)
+        self.send_header("Cache-Control", "no-cache, private")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=FRAME")
+        self.end_headers()
+        try:
+            while True:
+                with output.condition:
+                    output.condition.wait()
+                    frame = output.frame
+                self.wfile.write(b"--FRAME\r\n")
+                self.send_header("Content-Type", "image/jpeg")
+                self.send_header("Content-Length", len(frame))
+                self.end_headers()
+                self.wfile.write(frame)
+                self.wfile.write(b"\r\n")
+        except Exception as e:
+            logging.warning(
+                "Removed streaming client %s: %s", self.client_address, str(e)
+            )
 
 
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
@@ -85,14 +89,14 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     daemon_threads = True
 
 
-picam2 = Picamera2()
-picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
+cam = Picamera2()
+cam.configure(cam.create_video_configuration(main={"size": (640, 480)}))
 output = StreamingOutput()
-picam2.start_recording(JpegEncoder(), FileOutput(output))
+cam.start_recording(JpegEncoder(), FileOutput(output))
 
 try:
-    address = ('', 8000)
+    address = ("", 8000)
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 finally:
-    picam2.stop_recording()
+    cam.stop_recording()

@@ -2,7 +2,7 @@
 
 This is a Raspberry Pi Security Camera.
 
-## First time setup
+## Apache Server Setup
 
 This project uses Apache. Make sure it is installed (`sudo apt install apache2`).
 
@@ -28,6 +28,14 @@ The `apache-setup.sh` script will do the rest:
 * Start apache2.service
 
 Be sure to run it with sudo.
+
+## Python Streaming Server
+
+Run with:
+
+```bash
+python mjpeg_server.py &
+```
 
 ## Documentation
 
