@@ -17,7 +17,7 @@ from picamera2.outputs import FileOutput
 PORT = 8000
 SIZE = (720, 480)
 
-PAGE = f"""\
+LIVESTREAM_PAGE = f"""\
 <html>
 <head>
 <title>Pi-Cam</title>
@@ -25,6 +25,18 @@ PAGE = f"""\
 <body>
 <h1>Raspberry Pi Security Camera!</h1>
 <img src="stream.mjpg" width="{SIZE[0]}" height="{SIZE[1]}" />
+</body>
+</html>
+"""
+
+PLAYBACK_PAGE = f"""\
+<html>
+<head>
+<title>Pi-Cam</title>
+</head>
+<body>
+<h1>Raspberry Pi Security Camera!</h1>
+<video src="playback.mjpg" width="{SIZE[0]}" height="{SIZE[1]}" />
 </body>
 </html>
 """
@@ -56,15 +68,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.end_headers()
         elif self.path == "/playback.html":
-            playbackHTML = PAGE.replace("stream.mjpg", "playback.mjpg").encode("utf-8")
-
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.send_header("Content-Length", len(playbackHTML))
-            self.end_headers()
-            self.wfile.write(playbackHTML)
-        elif self.path == "/playback.mjpg":
             self._playback()
+        elif self.path == "/playback.mjpg":
+            self._playback_video()
         elif self.path == "/stream.mjpg":
             self._livestream()
         else:
@@ -72,7 +78,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
 
     def _index(self):
-        content = PAGE.encode("utf-8")
+        content = LIVESTREAM_PAGE.encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.send_header("Content-Length", len(content))
@@ -80,6 +86,15 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback(self):
+        content = PLAYBACK_PAGE.encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Content-Length", len(content))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _playback_video(self):
         recordingOutput.stop()  # Check if it actually is recording first
 
         with open("playback.mjpg", "rb") as file:
