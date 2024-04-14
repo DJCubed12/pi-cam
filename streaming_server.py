@@ -14,7 +14,7 @@ from picamera2 import Picamera2
 from picamera2.encoders import JpegEncoder
 from picamera2.outputs import FileOutput
 
-PORT = 80
+PORT = 8000
 SIZE = (720, 480)
 
 PAGE = f"""\
@@ -49,8 +49,6 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
         elif self.path == "/index.html":
             self._index()
-        elif self.path == "/snapshot.jpg":
-            self._snapshot()
         elif self.path == "/stream.mjpg":
             self._livestream()
         else:
@@ -63,22 +61,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html")
         self.send_header("Content-Length", len(content))
         self.end_headers()
-
         self.wfile.write(content)
-
-    def _snapshot(self):
-        # Take snapshot
-        cam.capture_file("snapshot.jpg", "lores")
-        with open("snapshot.jpg", "rb") as file:
-            snapshot = file.read()
-
-        # Send snapshot
-        self.send_response(200)
-        self.send_header("Content-Type", "image/jpeg")
-        self.send_header("Content-Length", len(snapshot))
-        self.end_headers()
-
-        self.wfile.write(snapshot)
 
     def _livestream(self):
         self.send_response(200)
@@ -87,12 +70,11 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.send_header("Pragma", "no-cache")
         self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=FRAME")
         self.end_headers()
-
         try:
             while True:
-                with livestream.condition:
-                    livestream.condition.wait()
-                    frame = livestream.frame
+                with output.condition:
+                    output.condition.wait()
+                    frame = output.frame
                 self.wfile.write(b"--FRAME\r\n")
                 self.send_header("Content-Type", "image/jpeg")
                 self.send_header("Content-Length", len(frame))
@@ -111,10 +93,9 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 cam = Picamera2()
-cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
-livestream = StreamingOutput()
-# recordingOutput = FileOutput()  # Read 9.3 in Picamera2 manual
-cam.start_recording(JpegEncoder(), FileOutput(livestream))
+cam.configure(cam.create_video_configuration(main={"size": SIZE}))
+output = StreamingOutput()
+cam.start_recording(JpegEncoder(), FileOutput(output))
 
 try:
     address = ("", PORT)
