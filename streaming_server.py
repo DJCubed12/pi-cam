@@ -11,7 +11,7 @@ from http import server
 from threading import Condition
 
 from picamera2 import Picamera2
-from picamera2.encoders import JpegEncoder
+from picamera2.encoders import MJPEGEncoder
 from picamera2.outputs import FileOutput
 
 PORT = 8000
@@ -95,9 +95,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.end_headers()
         try:
             while True:
-                with livestream.condition:
-                    livestream.condition.wait()
-                    frame = livestream.frame
+                with streamingOutput.condition:
+                    streamingOutput.condition.wait()
+                    frame = streamingOutput.frame
                 self.wfile.write(b"--FRAME\r\n")
                 self.send_header("Content-Type", "image/jpeg")
                 self.send_header("Content-Length", len(frame))
@@ -118,9 +118,10 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
-livestream = FileOutput(StreamingOutput())
+streamingOutput = StreamingOutput()
+livestream = FileOutput(streamingOutput)
 # recordingOutput = FileOutput()
-encoder = JpegEncoder()
+encoder = MJPEGEncoder()
 encoder.output = [livestream]  # , recordingOutput]
 
 cam.start_encoder(encoder)
