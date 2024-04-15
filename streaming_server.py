@@ -16,14 +16,14 @@ from picamera2.outputs import FileOutput
 PORT = 8000
 VIDEO_SIZE = (720, 480)
 
-with open("html/index.html", "r") as file:
+with open("src/index.template.html", "r") as file:
     LIVESTREAM_TEMPLATE = (
-        file.read().replace("#WIDTH", VIDEO_SIZE[0]).replace("#HEIGHT", VIDEO_SIZE[1])
+        file.read().replace("#WIDTH", str(VIDEO_SIZE[0])).replace("#HEIGHT", str(VIDEO_SIZE[1]))
     )
 
-with open("html/playback.html", "r") as file:
+with open("src/playback.template.html", "r") as file:
     PLAYBACK_TEMPLATE = (
-        file.read().replace("#WIDTH", VIDEO_SIZE[0]).replace("#HEIGHT", VIDEO_SIZE[1])
+        file.read().replace("#WIDTH", str(VIDEO_SIZE[0])).replace("#HEIGHT", str(VIDEO_SIZE[1]))
     )
 
 
