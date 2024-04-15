@@ -70,6 +70,7 @@ TODO:
 * Page to display all recordings. Click on recording for playback.
 * On/off buttons
 * Fix glitchy color issue on recordings (main stream)
+* Constantly run recordings, splitting, saving, and restarting them automatically
 
 ## Requirements
 

@@ -82,8 +82,10 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 "ffmpeg -i recordings/playback.h264 -y -c:v copy -an recordings/playback.mp4",
                 shell=True,
                 check=True,
-            )
+            )  # Raises error if issue occurred
             # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
+            if Path("recordings/playback.mp4").exists():
+                Path("recordings/playback.h264").unlink()  # Delete H264 version
         elif self.path == "/playback.html":
             self._playback()
         elif self.path == "/stream.mjpg":
@@ -169,7 +171,7 @@ recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
 # Set recording to main, but don't actually start recording yet
 cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()
-Path("recordings").mkdir(exist_ok=True) # Make recordings dir if it doesn't exist
+Path("recordings").mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
 
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
