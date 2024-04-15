@@ -14,31 +14,17 @@ from picamera2.encoders import MJPEGEncoder, H264Encoder
 from picamera2.outputs import FileOutput
 
 PORT = 8000
-SIZE = (720, 480)
+VIDEO_SIZE = (720, 480)
 
-LIVESTREAM_PAGE = f"""\
-<html>
-<head>
-<title>Pi-Cam</title>
-</head>
-<body>
-<h1>Raspberry Pi Security Camera!</h1>
-<img src="stream.mjpg" width="{SIZE[0]}" height="{SIZE[1]}" />
-</body>
-</html>
-"""
+with open("html/index.html", "r") as file:
+    LIVESTREAM_TEMPLATE = (
+        file.read().replace("#WIDTH", VIDEO_SIZE[0]).replace("#HEIGHT", VIDEO_SIZE[1])
+    )
 
-PLAYBACK_PAGE = f"""\
-<html>
-<head>
-<title>Pi-Cam</title>
-</head>
-<body>
-<h1>Raspberry Pi Security Camera!</h1>
-<video src="playback.mp4" width="{SIZE[0]}" height="{SIZE[1]}" controls/>
-</body>
-</html>
-"""
+with open("html/playback.html", "r") as file:
+    PLAYBACK_TEMPLATE = (
+        file.read().replace("#WIDTH", VIDEO_SIZE[0]).replace("#HEIGHT", VIDEO_SIZE[1])
+    )
 
 
 class StreamingOutput(io.BufferedIOBase):
@@ -104,7 +90,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
 
     def _index(self):
-        content = LIVESTREAM_PAGE.encode("utf-8")
+        html = LIVESTREAM_TEMPLATE  # Replace any template variables here
+        content = html.encode("utf-8")
+
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.send_header("Content-Length", len(content))
@@ -112,7 +100,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback(self):
-        content = PLAYBACK_PAGE.encode("utf-8")
+        html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", "playback.mp4")
+        content = html.encode("utf-8")
 
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
@@ -134,6 +123,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _livestream(self):
+        """This is code from: https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py. It's best to leave it alone."""
         self.send_response(200)
         self.send_header("Age", 0)
         self.send_header("Cache-Control", "no-cache, private")
@@ -163,7 +153,11 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 
 cam = Picamera2()
-cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
+cam.configure(
+    cam.create_video_configuration(
+        main={"size": VIDEO_SIZE}, lores={"size": VIDEO_SIZE}
+    )
+)
 
 recordingEncoder = H264Encoder()
 recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
