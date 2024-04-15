@@ -6,6 +6,7 @@ import io
 import logging
 import subprocess
 import socketserver
+from pathlib import Path
 from http import server
 from threading import Condition
 
@@ -114,7 +115,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
-        with open("playback.mp4", "rb") as file:
+        with open("recordings/playback.mp4", "rb") as file:
             data = file.read()
 
         self.send_response(200)
@@ -168,6 +169,7 @@ recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
 # Set recording to main, but don't actually start recording yet
 cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()
+Path("recordings").mkdir(exist_ok=True) # Make recordings dir if it doesn't exist
 
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
