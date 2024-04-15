@@ -60,15 +60,16 @@ Takes a picture with the Pi Camera and saves it as `/snapshot.jpg` (overwritting
 
 ## Dev Notes
 
-**Left of at [Picamera2 4.2.1](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf)**
-
 Autofocus configurations at [5.2](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf).
 
-[This article](https://forum.arducam.com/t/how-to-make-libcamera-still-faster/4898/7) seems to imply that the camera will operate much faster when used within a script. Setup the camera configuration once at beginning (~1 sec), then leave program running so configuration doesn't have to occur again. (How to make this work like an API if it's constantly running?)
+How to [handle POST and PUT](https://stackoverflow.com/questions/66514500/how-do-i-configure-a-python-server-for-post) in Python HTTPServer.
 
-Possible [answer](https://www.raspberrypi.com/documentation/computers/camera_software.html#network-streaming) to all my future streaming problems??
-
-[How media streaming with HTTP works](https://superuser.com/questions/1112904/streaming-media-from-inside-html-pages-by-example)
+TODO:
+* Make logging to my liking; separate error logs from access logs.
+* HTML buttons to do recordings.
+* Page to display all recordings. Click on recording for playback.
+* On/off buttons
+* Fix glitchy color issue on recordings (main stream)
 
 ## Requirements
 

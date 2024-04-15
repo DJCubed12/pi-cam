@@ -18,12 +18,16 @@ VIDEO_SIZE = (720, 480)
 
 with open("src/index.template.html", "r") as file:
     LIVESTREAM_TEMPLATE = (
-        file.read().replace("#WIDTH", str(VIDEO_SIZE[0])).replace("#HEIGHT", str(VIDEO_SIZE[1]))
+        file.read()
+        .replace("#WIDTH", str(VIDEO_SIZE[0]))
+        .replace("#HEIGHT", str(VIDEO_SIZE[1]))
     )
 
 with open("src/playback.template.html", "r") as file:
     PLAYBACK_TEMPLATE = (
-        file.read().replace("#WIDTH", str(VIDEO_SIZE[0])).replace("#HEIGHT", str(VIDEO_SIZE[1]))
+        file.read()
+        .replace("#WIDTH", str(VIDEO_SIZE[0]))
+        .replace("#HEIGHT", str(VIDEO_SIZE[1]))
     )
 
 
@@ -49,12 +53,12 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == "/start-rec":
             if recordingEncoder.running:
                 # Recording already started
-                self.send_response(409)
+                self.send_error(409, "Recording already running")
                 self.end_headers()
                 return
 
             # TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
-            recordingEncoder.output = FileOutput("playback.h264")
+            recordingEncoder.output = FileOutput("recordings/playback.h264")
             recordingEncoder.start()
 
             self.send_response(200)
@@ -62,7 +66,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == "/stop-rec":
             if not recordingEncoder.running:
                 # Must start with /start-rec first
-                self.send_response(409)
+                self.send_error(409, "Recording not running")
                 self.end_headers()
                 return
 
@@ -74,17 +78,17 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
 
             # Convert recorded h264 to mp4
             subprocess.run(
-                "ffmpeg -i playback.h264 -y -c:v copy -an playback.mp4",
+                "ffmpeg -i recordings/playback.h264 -y -c:v copy -an recordings/playback.mp4",
                 shell=True,
                 check=True,
             )
             # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
         elif self.path == "/playback.html":
             self._playback()
-        elif self.path == "/playback.mp4":
-            self._playback_video()
         elif self.path == "/stream.mjpg":
             self._livestream()
+        elif self.path == "/playback.mp4":
+            self._playback_video()
         else:
             self.send_error(404)
             self.end_headers()
