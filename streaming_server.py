@@ -5,6 +5,7 @@
 # Note: needs simplejpeg to be installed (pip3 install simplejpeg).
 
 import os
+import subprocess
 
 import io
 import logging
@@ -38,7 +39,7 @@ PLAYBACK_PAGE = f"""\
 </head>
 <body>
 <h1>Raspberry Pi Security Camera!</h1>
-<video src="playback.h264" width="{SIZE[0]}" height="{SIZE[1]}" />
+<video src="playback.mp4" width="{SIZE[0]}" height="{SIZE[1]}" />
 </body>
 </html>
 """
@@ -80,9 +81,12 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html")
             self.send_header("Content-Length", len(dirContents))
             self.wfile.write(dirContents)
+
+            # Convert recorded h264 to mp4
+            subprocess.run("ffmpeg -i playback.h264 -c:v copy -an playback.mp4", shell=True, check=True)
         elif self.path == "/playback.html":
             self._playback()
-        elif self.path == "/playback.h264":
+        elif self.path == "/playback.mp4":
             self._playback_video()
         elif self.path == "/stream.mjpg":
             self._livestream()
@@ -108,10 +112,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
-        # encoder.output.remove(recordingOutput)  # Is this gonna break something?
-        # recordingOutput.stop()  # Check if it actually is recording first
-
-        with open("playback.h264", "rb") as file:
+        with open("playback.mp4", "rb") as file:
             data = file.read()
 
         self.send_response(200)
@@ -157,6 +158,9 @@ cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size":
 
 recordingOutput = FileOutput("playback.h264")
 recordingEncoder = H264Encoder()
+# After recording, convert to mp4 using ffmpeg:
+# ffmpeg -i playback.h264 -c:v copy -an ~/playback.mp4
+# Note: It says the h264 file has no timestamps set, which is apparently deprecated
 
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
