@@ -67,6 +67,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
+            global recordingOutput
+            recordingOutput = FileOutput("playback.h264")
             recordingOutput.start()
             recordingEncoder.start()
             recordingEncoder.output = recordingOutput
@@ -166,7 +168,8 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
-recordingOutput = FileOutput("playback.h264")
+# TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
+# recordingOutput = FileOutput("playback.h264")
 recordingEncoder = H264Encoder()
 cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()  # Don't start recording until /start-rec
