@@ -55,6 +55,8 @@ Takes a picture with the Pi Camera and saves it as `/snapshot.jpg` (overwritting
 * [The Picamera2 Library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf) (use libcamera in Python)
   * [picamera](https://github.com/raspberrypi/picamera2/tree/main) (Github)
   * [Picamera2 examples](https://github.com/ArduCAM/picamera2_examples/tree/main)
+* How to record & stream picamera output simultaneously
+  * [record and stream video from camera simultaneously](https://raspberrypi.stackexchange.com/questions/27041/record-and-stream-video-from-camera-simultaneously) (Rasp Pi Stack Overflow)
 
 ## Dev Notes
 
