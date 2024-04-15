@@ -1,21 +1,17 @@
 #!/usr/bin/python3
 
 # Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
-# Run this script, then point a web browser at http:<this-ip-address>:8000
-# Note: needs simplejpeg to be installed (pip3 install simplejpeg).
-
-import os
-import subprocess
 
 import io
 import logging
+import subprocess
 import socketserver
 from http import server
 from threading import Condition
 
 from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder, H264Encoder
-from picamera2.outputs import FileOutput, FfmpegOutput
+from picamera2.outputs import FileOutput
 
 PORT = 8000
 SIZE = (720, 480)
@@ -39,7 +35,7 @@ PLAYBACK_PAGE = f"""\
 </head>
 <body>
 <h1>Raspberry Pi Security Camera!</h1>
-<video src="playback.mp4" width="{SIZE[0]}" height="{SIZE[1]}" />
+<video src="playback.mp4" width="{SIZE[0]}" height="{SIZE[1]}" controls/>
 </body>
 </html>
 """
@@ -65,25 +61,39 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == "/index.html":
             self._index()
         elif self.path == "/start-rec":
+            if recordingEncoder.running:
+                # Recording already started
+                self.send_response(409)
+                self.end_headers()
+                return
+
             recordingOutput.start()
+            recordingEncoder.start()
             recordingEncoder.output = recordingOutput
 
             self.send_response(200)
             self.end_headers()
         elif self.path == "/stop-rec":
+            if not recordingEncoder.running:
+                # Must start with /start-rec first
+                self.send_response(409)
+                self.end_headers()
+                return
+
             recordingEncoder.stop()
             recordingOutput.stop()
 
-            dirContents = str(os.listdir()).encode("utf-8")
-
+            # TODO: Send back json with the saved file's name
             self.send_response(200)
             self.end_headers()
-            self.send_header("Content-Type", "text/html")
-            self.send_header("Content-Length", len(dirContents))
-            self.wfile.write(dirContents)
 
             # Convert recorded h264 to mp4
-            subprocess.run("ffmpeg -i playback.h264 -c:v copy -an playback.mp4", shell=True, check=True)
+            subprocess.run(
+                "ffmpeg -i playback.h264 -y -c:v copy -an playback.mp4",
+                shell=True,
+                check=True,
+            )
+            # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
         elif self.path == "/playback.html":
             self._playback()
         elif self.path == "/playback.mp4":
@@ -158,17 +168,15 @@ cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size":
 
 recordingOutput = FileOutput("playback.h264")
 recordingEncoder = H264Encoder()
-# After recording, convert to mp4 using ffmpeg:
-# ffmpeg -i playback.h264 -c:v copy -an ~/playback.mp4
-# Note: It says the h264 file has no timestamps set, which is apparently deprecated
+cam.start_encoder(recordingEncoder, name="main")
+recordingEncoder.stop()  # Don't start recording until /start-rec
 
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
 streamingEncoder = MJPEGEncoder()
 streamingEncoder.output = [livestream]
-
-cam.start_encoder(recordingEncoder, name="main")
 cam.start_encoder(streamingEncoder, name="lores")
+
 cam.start()
 
 try:
