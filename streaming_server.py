@@ -67,11 +67,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            global recordingOutput
-            recordingOutput = FileOutput("playback.h264")
-            recordingOutput.start()
+            # TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
+            recordingEncoder.output = FileOutput("playback.h264")
             recordingEncoder.start()
-            recordingEncoder.output = recordingOutput
 
             self.send_response(200)
             self.end_headers()
@@ -83,7 +81,6 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 return
 
             recordingEncoder.stop()
-            recordingOutput.stop()
 
             # TODO: Send back json with the saved file's name
             self.send_response(200)
@@ -168,16 +165,15 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
-# TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
-# recordingOutput = FileOutput("playback.h264")
 recordingEncoder = H264Encoder()
+recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
+# Set recording to main, but don't actually start recording yet
 cam.start_encoder(recordingEncoder, name="main")
-recordingEncoder.stop()  # Don't start recording until /start-rec
+recordingEncoder.stop()
 
 streamingOutput = StreamingOutput()
-livestream = FileOutput(streamingOutput)
 streamingEncoder = MJPEGEncoder()
-streamingEncoder.output = [livestream]
+streamingEncoder.output = FileOutput(streamingOutput)
 cam.start_encoder(streamingEncoder, name="lores")
 
 cam.start()
