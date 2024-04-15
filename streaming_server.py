@@ -38,7 +38,7 @@ PLAYBACK_PAGE = f"""\
 </head>
 <body>
 <h1>Raspberry Pi Security Camera!</h1>
-<video src="playback.mjpg" width="{SIZE[0]}" height="{SIZE[1]}" />
+<video src="playback.h264" width="{SIZE[0]}" height="{SIZE[1]}" />
 </body>
 </html>
 """
@@ -65,12 +65,12 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self._index()
         elif self.path == "/start-rec":
             recordingOutput.start()
-            encoder.output = [livestream, recordingOutput]
+            recordingEncoder.output = recordingOutput
 
             self.send_response(200)
             self.end_headers()
         elif self.path == "/stop-rec":
-            encoder.output = livestream
+            recordingEncoder.stop()
             recordingOutput.stop()
 
             dirContents = str(os.listdir()).encode("utf-8")
@@ -82,7 +82,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.wfile.write(dirContents)
         elif self.path == "/playback.html":
             self._playback()
-        elif self.path == "/playback.mjpg":
+        elif self.path == "/playback.h264":
             self._playback_video()
         elif self.path == "/stream.mjpg":
             self._livestream()
@@ -111,7 +111,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         # encoder.output.remove(recordingOutput)  # Is this gonna break something?
         # recordingOutput.stop()  # Check if it actually is recording first
 
-        with open("playback.mjpg", "rb") as file:
+        with open("playback.h264", "rb") as file:
             data = file.read()
 
         self.send_response(200)
@@ -155,14 +155,16 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 cam = Picamera2()
 cam.configure(cam.create_video_configuration(main={"size": SIZE}, lores={"size": SIZE}))
 
-recordingOutput = FileOutput("playback.mjpg")
+recordingOutput = FileOutput("playback.h264")
+recordingEncoder = H264Encoder()
 
 streamingOutput = StreamingOutput()
 livestream = FileOutput(streamingOutput)
-encoder = MJPEGEncoder()
-encoder.output = [livestream]
+streamingEncoder = MJPEGEncoder()
+streamingEncoder.output = [livestream]
 
-cam.start_encoder(encoder)
+cam.start_encoder(recordingEncoder, name="main")
+cam.start_encoder(streamingEncoder, name="lores")
 cam.start()
 
 try:
