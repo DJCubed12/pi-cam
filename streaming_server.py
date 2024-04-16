@@ -3,12 +3,13 @@
 # Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
 
 import io
+import time
 import logging
 import subprocess
 import socketserver
 from pathlib import Path
 from http import server
-from threading import Condition
+from threading import Condition, Thread
 
 from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder, H264Encoder
@@ -16,6 +17,7 @@ from picamera2.outputs import FileOutput
 
 PORT = 8000
 VIDEO_SIZE = (720, 480)
+RECORDING_INTERVAL = 60  # In seconds
 
 with open("src/index.template.html", "r") as file:
     LIVESTREAM_TEMPLATE = (
@@ -51,41 +53,41 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
         elif self.path == "/index.html":
             self._index()
-        elif self.path == "/start-rec":
-            if recordingEncoder.running:
-                # Recording already started
-                self.send_error(409, "Recording already running")
-                self.end_headers()
-                return
+        # elif self.path == "/start-rec":
+        #     if recordingEncoder.running:
+        #         # Recording already started
+        #         self.send_error(409, "Recording already running")
+        #         self.end_headers()
+        #         return
 
-            # TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
-            recordingEncoder.output = FileOutput("recordings/playback.h264")
-            recordingEncoder.start()
+        #     # TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
+        #     recordingEncoder.output = FileOutput("recordings/playback.h264")
+        #     recordingEncoder.start()
 
-            self.send_response(200)
-            self.end_headers()
-        elif self.path == "/stop-rec":
-            if not recordingEncoder.running:
-                # Must start with /start-rec first
-                self.send_error(409, "Recording not running")
-                self.end_headers()
-                return
+        #     self.send_response(200)
+        #     self.end_headers()
+        # elif self.path == "/stop-rec":
+        #     if not recordingEncoder.running:
+        #         # Must start with /start-rec first
+        #         self.send_error(409, "Recording not running")
+        #         self.end_headers()
+        #         return
 
-            recordingEncoder.stop()
+        #     recordingEncoder.stop()
 
-            # TODO: Send back json with the saved file's name
-            self.send_response(200)
-            self.end_headers()
+        #     # TODO: Send back json with the saved file's name
+        #     self.send_response(200)
+        #     self.end_headers()
 
-            # Convert recorded h264 to mp4
-            subprocess.run(
-                "ffmpeg -i recordings/playback.h264 -y -c:v copy -an recordings/playback.mp4",
-                shell=True,
-                check=True,
-            )  # Raises error if issue occurred
-            # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
-            if Path("recordings/playback.mp4").exists():
-                Path("recordings/playback.h264").unlink()  # Delete H264 version
+        #     # Convert recorded h264 to mp4
+        #     subprocess.run(
+        #         "ffmpeg -i recordings/playback.h264 -y -c:v copy -an recordings/playback.mp4",
+        #         shell=True,
+        #         check=True,
+        #     )  # Raises error if issue occurred
+        #     # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
+        #     if Path("recordings/playback.mp4").exists():
+        #         Path("recordings/playback.h264").unlink()  # Delete H264 version
         elif self.path == "/playback.html":
             self._playback()
         elif self.path == "/stream.mjpg":
@@ -117,7 +119,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
-        with open("recordings/playback.mp4", "rb") as file:
+        with open("recordings/latest.mp4", "rb") as file:
             data = file.read()
 
         self.send_response(200)
@@ -159,6 +161,42 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     daemon_threads = True
 
 
+def recordInBackground():
+    """Records Pi-Cam's feed and saves to file at regular intervals."""
+    # TODO: Current this does NOT allow simultaneous recording on recordingEncoder. Fix this by being more careful with recordingEncoder.output
+
+    WAIT_INTERVAL = 5  # In seconds
+
+    recordingStartTime = time.time()
+    # TODO: Use CircularOutput to try to add some cushion and record as much as possible?
+    recordingEncoder.output = FileOutput("recordings/latest.h264")
+    recordingEncoder.start()
+    while True:
+        if not isRecordingInBackground:
+            # Program has stopped or attempt has been made to stop recording
+            break
+        elif time.time() - recordingStartTime < RECORDING_INTERVAL:
+            time.sleep(WAIT_INTERVAL)
+        else:  # Stop, save, restart
+            recordingEncoder.stop()
+            # TODO: Name these files after their start time with time.localtime()
+
+            # TODO: Use different names to not overwrite files. Move this to end so next recording starts as fast as possible
+            # Convert the last recording to mp4
+            subprocess.run(
+                "ffmpeg -i recordings/latest.h264 -y -c:v copy -an recordings/latest.mp4",
+                shell=True,
+                check=True,
+            )  # Raises error if issue occurred
+
+            recordingStartTime = time.time()
+            recordingEncoder.output = FileOutput("recordings/latest.h264")
+            recordingEncoder.start()
+
+    # Cleanup
+    recordingEncoder.stop()
+
+
 cam = Picamera2()
 cam.configure(
     cam.create_video_configuration(
@@ -172,12 +210,15 @@ recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
 cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()
 Path("recordings").mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
+isRecordingInBackground = True
+backgroundRecorderThread = Thread(recordInBackground)
 
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
 streamingEncoder.output = FileOutput(streamingOutput)
 cam.start_encoder(streamingEncoder, name="lores")
 
+backgroundRecorderThread.start()
 cam.start()
 
 try:
@@ -186,4 +227,6 @@ try:
     server.serve_forever()
 finally:
     # TODO: Stop all current recordings first
+    isRecordingInBackground = False
+    backgroundRecorderThread.join(10.0)
     cam.stop()
