@@ -162,14 +162,16 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
     def _playback(self):
         arg = self.VIDEO_FILE_ARG_PATTERN.match(self.path.replace("/playback.html", ""))
         if arg:
-            filename = "recordings/" + arg.group(1)
+            file = "recordings" / Path(arg.group(1))
         else:
             # TODO: Use some kind of default video instead
             self.send_error(404)
             self.end_headers()
             return
 
-        html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", filename)
+        html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", file).replace(
+            "#FILENAME", file.name
+        )
         content = html.encode("utf-8")
 
         self.send_response(200)
