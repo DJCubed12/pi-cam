@@ -3,7 +3,6 @@
 # Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
 
 import io
-import time
 import logging
 import subprocess
 import socketserver
@@ -14,6 +13,8 @@ from threading import Condition, Thread
 from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder, H264Encoder
 from picamera2.outputs import FileOutput
+
+from recorder import recordInBackground, SLEEP_INTERVAL
 
 PORT = 8000
 VIDEO_SIZE = (720, 480)
@@ -162,59 +163,6 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     daemon_threads = True
 
 
-def recordInBackground():
-    """Records Pi-Cam's feed and saves to file at regular intervals."""
-    # TODO: Current this does NOT allow simultaneous recording on recordingEncoder. Fix this by being more careful with recordingEncoder.output
-
-    # This should be somewhat small to minimize shutdown time from thead.join()
-    WAIT_INTERVAL = 5  # In seconds
-
-    startTime = time.time()
-    # TODO: Use CircularOutput to try to add some cushion and record as much as possible?
-
-    currentFile = _createRecordingFilename(startTime)
-    recordingEncoder.output = FileOutput(currentFile)
-    recordingEncoder.start()
-    while True:
-        if not isRecordingInBackground:
-            # Program has stopped or attempt has been made to stop recording
-            break
-        elif time.time() - startTime < RECORDING_INTERVAL:
-            time.sleep(WAIT_INTERVAL)
-        else:
-            # Stop, save, restart
-            recordingEncoder.stop()
-
-            startTime = time.time()
-            # Keep currentFile until we convert and delete last h264 recording
-            _nextFile = _createRecordingFilename(startTime)
-            recordingEncoder.output = FileOutput(_nextFile)
-            recordingEncoder.start()
-
-            mp4File = currentFile.with_suffix(".mp4")
-            subprocess.run(
-                f"ffmpeg -i {currentFile} -y -c:v copy -an {mp4File}",
-                shell=True,
-                check=True,
-            )  # Raises error if issue occurred
-            if mp4File.exists():
-                currentFile.unlink()
-
-            currentFile = _nextFile
-
-    # Cleanup
-    recordingEncoder.stop()
-
-
-def _createRecordingFilename(timestamp: float) -> Path:
-    """Filename in 'd-m-yyyy_h-m' format. Timestamp is epoch time in seconds as returned by time.time()."""
-    t = time.localtime(timestamp)
-    filename = Path(
-        f"{t.tm_mday}-{t.tm_mon}-{t.tm_year}_{t.tm_hour}h{t.tm_min}m{t.tm_sec}s"
-    )
-    return (RECORDINGS_FOLDER / filename).with_suffix(".h264")
-
-
 cam = Picamera2()
 cam.configure(
     cam.create_video_configuration(
@@ -229,14 +177,18 @@ cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()
 RECORDINGS_FOLDER.mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
 isRecordingInBackground = True
-backgroundRecorderThread = Thread(target=recordInBackground)
+backgroundRecorderThread = Thread(
+    target=recordInBackground,
+    args=(recordingEncoder, lambda: not isRecordingInBackground, RECORDINGS_FOLDER),
+    daemon=True,
+)
 
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
 streamingEncoder.output = FileOutput(streamingOutput)
 cam.start_encoder(streamingEncoder, name="lores")
 
-backgroundRecorderThread.start()
+backgroundRecorderThread.start()  # Starts recordingEncoder internally
 cam.start()
 
 try:
@@ -244,7 +196,8 @@ try:
     server = StreamingServer(address, StreamingHandler)
     server.serve_forever()
 finally:
-    # TODO: Stop all current recordings first
+    # Is waiting to join the thread really necessary if it is daemon?
+    # Would there be problems with ffmpeg if stopped in the middle of transcoding?
     isRecordingInBackground = False
-    backgroundRecorderThread.join(10.0)
+    backgroundRecorderThread.join(SLEEP_INTERVAL * 2)
     cam.stop()
