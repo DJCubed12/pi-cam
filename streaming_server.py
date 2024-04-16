@@ -56,40 +56,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         elif self.path == "/index.html":
             self._index()
         # elif self.path == "/start-rec":
-        #     if recordingEncoder.running:
-        #         # Recording already started
-        #         self.send_error(409, "Recording already running")
-        #         self.end_headers()
-        #         return
-
-        #     # TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
-        #     recordingEncoder.output = FileOutput("recordings/playback.h264")
-        #     recordingEncoder.start()
-
-        #     self.send_response(200)
-        #     self.end_headers()
+        #     self._start_rec()
         # elif self.path == "/stop-rec":
-        #     if not recordingEncoder.running:
-        #         # Must start with /start-rec first
-        #         self.send_error(409, "Recording not running")
-        #         self.end_headers()
-        #         return
-
-        #     recordingEncoder.stop()
-
-        #     # TODO: Send back json with the saved file's name
-        #     self.send_response(200)
-        #     self.end_headers()
-
-        #     # Convert recorded h264 to mp4
-        #     subprocess.run(
-        #         "ffmpeg -i recordings/playback.h264 -y -c:v copy -an recordings/playback.mp4",
-        #         shell=True,
-        #         check=True,
-        #     )  # Raises error if issue occurred
-        #     # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
-        #     if RECORDINGS_FOLDER / Path("playback.mp4").exists():
-        #         (RECORDINGS_FOLDER / Path("playback.h264")).unlink()  # Delete H264 version
+        #     self._stop_rec()
         elif self.path == "/playback.html":
             self._playback()
         elif self.path == "/stream.mjpg":
@@ -109,6 +78,45 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.send_header("Content-Length", len(content))
         self.end_headers()
         self.wfile.write(content)
+
+    def _start_rec(self):
+        """WARNING: Does NOT work safely with BackgroundRecorder. (Non-thread-safe)"""
+        if recordingEncoder.running:
+            # Recording already started
+            self.send_error(409, "Recording already running")
+            self.end_headers()
+            return
+
+        # TODO: Provide second file to output timestamps to (part of FileOutput's ctor)
+        recordingEncoder.output = FileOutput("recordings/playback.h264")
+        recordingEncoder.start()
+
+        self.send_response(200)
+        self.end_headers()
+
+    def _stop_rec(self):
+        """WARNING: Does NOT work safely with BackgroundRecorder. (Non-thread-safe)"""
+        if not recordingEncoder.running:
+            # Must start with /start-rec first
+            self.send_error(409, "Recording not running")
+            self.end_headers()
+            return
+
+        recordingEncoder.stop()
+
+        # TODO: Send back json with the saved file's name
+        self.send_response(200)
+        self.end_headers()
+
+        # Convert recorded h264 to mp4
+        subprocess.run(
+            "ffmpeg -i recordings/playback.h264 -y -c:v copy -an recordings/playback.mp4",
+            shell=True,
+            check=True,
+        )  # Raises error if issue occurred
+        # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
+        if RECORDINGS_FOLDER / Path("playback.mp4").exists():
+            (RECORDINGS_FOLDER / Path("playback.h264")).unlink()  # Delete H264 version
 
     def _playback(self):
         html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", "playback.mp4")

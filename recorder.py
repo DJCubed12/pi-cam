@@ -1,20 +1,16 @@
-"""Functions for recording Pi-Cam's output to the files in the background."""
+"""Record Pi-Cam's feed in the background with BackgroundRecorder (a Thread subclass)."""
 
 import time
 import subprocess
 from pathlib import Path
 from threading import Thread
-from types import FunctionType
 
 from picamera2.outputs import FileOutput
 from picamera2.encoders import H264Encoder
 
 
-# _stopRecordingFlag = False
-
-
 class BackgroundRecorder(Thread):
-    """Records Pi-Cam's feed and saves to file at regular intervals."""
+    """Records Pi-Cam's feed and saves to file at regular intervals. Call start() to start background recording and signalStopRecording to gracefully stop."""
 
     RECORDING_INTERVAL = 60  # In seconds
     # This should be somewhat small to minimize shutdown time from thread.join()

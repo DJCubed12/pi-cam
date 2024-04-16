@@ -71,10 +71,9 @@ TODO:
 * On/off buttons
 * Fix glitchy color issue on recordings (main stream)
 * See how large recorded files are, decide how far back to keep them.
-* Finish recordingThread branch
-  * Fix recordingEncoder.output usage to allow multiple video outputs at once (to allow a record snippet button)
-    * This may also require a Condition lock on recordingEncoder.output
-    * If so, make a class to encapsulate and generalize this so I don't have to check if running, single output, multiple, etc...
+* Fix recordingEncoder.output usage to allow multiple video outputs at once (to allow /start-rec and /stop-rec)
+  * This may also require a Condition lock on recordingEncoder.output
+  * If so, make a class to encapsulate and generalize this so I don't have to check if running, single output, multiple, etc...
 
 ## Requirements
 
