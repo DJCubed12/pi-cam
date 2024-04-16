@@ -1,4 +1,7 @@
 #!/bin/python3
+
+# This is temporarily being kept for reference
+
 import time
 import os
 from picamera2 import Picamera2
@@ -17,10 +20,10 @@ cam = Picamera2()
 config = cam.create_still_configuration()
 cam.configure(config)
 
-cam.start_preview(False) # Shorthand for using Preview.NULL
+cam.start_preview(False)  # Shorthand for using Preview.NULL
 
 cam.start()
-time.sleep(2) # Gives system time to auto change focus, brightness, etc.
+time.sleep(2)  # Gives system time to auto change focus, brightness, etc.
 cam.capture_file(OUTPUT_FOLDER + "snapshot.jpg")
 
 print({"file": "snapshot.json"})

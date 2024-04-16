@@ -1,3 +1,5 @@
+# This is temporarily being kept for reference
+
 import time
 
 from picamera2 import Picamera2
