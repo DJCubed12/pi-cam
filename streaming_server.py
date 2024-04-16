@@ -8,7 +8,7 @@ import subprocess
 import socketserver
 from pathlib import Path
 from http import server
-from threading import Condition, Thread
+from threading import Condition
 
 from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder, H264Encoder
@@ -22,6 +22,7 @@ RECORDING_INTERVAL = 60  # In seconds
 RECORDINGS_FOLDER = Path("recordings")
 
 with open("src/index.template.html", "r") as file:
+    file.readline()  # Ignore top comment
     LIVESTREAM_TEMPLATE = (
         file.read()
         .replace("#WIDTH", str(VIDEO_SIZE[0]))
@@ -29,11 +30,16 @@ with open("src/index.template.html", "r") as file:
     )
 
 with open("src/playback.template.html", "r") as file:
+    file.readline()  # Ignore top comment
     PLAYBACK_TEMPLATE = (
         file.read()
         .replace("#WIDTH", str(VIDEO_SIZE[0]))
         .replace("#HEIGHT", str(VIDEO_SIZE[1]))
     )
+
+with open("src/recordings.template.html", "r") as file:
+    file.readline()
+    RECORDINGS_TEMPLATE = file.read()
 
 
 class StreamingOutput(io.BufferedIOBase):
@@ -55,6 +61,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
         elif self.path == "/index.html":
             self._index()
+        elif self.path == "/recordings":
+            self._recordings()
         # elif self.path == "/start-rec":
         #     self._start_rec()
         # elif self.path == "/stop-rec":
@@ -74,6 +82,29 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         content = html.encode("utf-8")
 
         self.send_response(200)
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Content-Length", len(content))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _recordings(self):
+        # Sort recordings by most recent
+        recordings = [r for r in RECORDINGS_FOLDER.iterdir()]
+        recordings.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+
+        html = ""
+        for r in recordings:
+            if r.suffix == ".mp4":
+                html += f'<p><a href="/playback?file={r.name}">{r.name}</a></p>\n'
+            elif r.suffix == ".h264":
+                html += f"<p>{r.name}</p>\n"
+            # Ignore non-video files
+        content = RECORDINGS_TEMPLATE.replace("#FILE_LIST", html).encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Age", 0)
+        self.send_header("Cache-Control", "no-cache, private")
+        self.send_header("Pragma", "no-cache")
         self.send_header("Content-Type", "text/html")
         self.send_header("Content-Length", len(content))
         self.end_headers()
