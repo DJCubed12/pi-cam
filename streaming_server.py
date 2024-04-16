@@ -227,7 +227,7 @@ cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()
 RECORDINGS_FOLDER.mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
 isRecordingInBackground = True
-backgroundRecorderThread = Thread(recordInBackground)
+backgroundRecorderThread = Thread(target=recordInBackground)
 
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
