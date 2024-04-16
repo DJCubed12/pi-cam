@@ -207,9 +207,11 @@ def recordInBackground():
 
 
 def _createRecordingFilename(timestamp: float) -> Path:
-    """Filename in 'dd-mm-yyyy_h-m' format. Timestamp is epoch time in seconds as returned by time.time()."""
+    """Filename in 'd-m-yyyy_h-m' format. Timestamp is epoch time in seconds as returned by time.time()."""
     t = time.localtime(timestamp)
-    filename = Path(f"{t.tm_mday}-{t.tm_mon}-{t.tm_year}_{t.tm_hour}-{t.tm_min}")
+    filename = Path(
+        f"{t.tm_mday}-{t.tm_mon}-{t.tm_year}_{t.tm_hour}h{t.tm_min}m{t.tm_sec}s"
+    )
     return (RECORDINGS_FOLDER / filename).with_suffix(".h264")
 
 
