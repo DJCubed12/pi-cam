@@ -18,6 +18,7 @@ from picamera2.outputs import FileOutput
 PORT = 8000
 VIDEO_SIZE = (720, 480)
 RECORDING_INTERVAL = 60  # In seconds
+RECORDINGS_FOLDER = Path("recordings")
 
 with open("src/index.template.html", "r") as file:
     LIVESTREAM_TEMPLATE = (
@@ -86,8 +87,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         #         check=True,
         #     )  # Raises error if issue occurred
         #     # Note: Output says the h264 file has no timestamps set, which is apparently deprecated
-        #     if Path("recordings/playback.mp4").exists():
-        #         Path("recordings/playback.h264").unlink()  # Delete H264 version
+        #     if RECORDINGS_FOLDER / Path("playback.mp4").exists():
+        #         (RECORDINGS_FOLDER / Path("playback.h264")).unlink()  # Delete H264 version
         elif self.path == "/playback.html":
             self._playback()
         elif self.path == "/stream.mjpg":
@@ -165,36 +166,51 @@ def recordInBackground():
     """Records Pi-Cam's feed and saves to file at regular intervals."""
     # TODO: Current this does NOT allow simultaneous recording on recordingEncoder. Fix this by being more careful with recordingEncoder.output
 
+    # This should be somewhat small to minimize shutdown time from thead.join()
     WAIT_INTERVAL = 5  # In seconds
 
-    recordingStartTime = time.time()
+    startTime = time.time()
     # TODO: Use CircularOutput to try to add some cushion and record as much as possible?
-    recordingEncoder.output = FileOutput("recordings/latest.h264")
+
+    currentFile = _createRecordingFilename(startTime)
+    recordingEncoder.output = FileOutput(currentFile)
     recordingEncoder.start()
     while True:
         if not isRecordingInBackground:
             # Program has stopped or attempt has been made to stop recording
             break
-        elif time.time() - recordingStartTime < RECORDING_INTERVAL:
+        elif time.time() - startTime < RECORDING_INTERVAL:
             time.sleep(WAIT_INTERVAL)
-        else:  # Stop, save, restart
+        else:
+            # Stop, save, restart
             recordingEncoder.stop()
-            # TODO: Name these files after their start time with time.localtime()
 
-            # TODO: Use different names to not overwrite files. Move this to end so next recording starts as fast as possible
-            # Convert the last recording to mp4
+            startTime = time.time()
+            # Keep currentFile until we convert and delete last h264 recording
+            _nextFile = _createRecordingFilename(startTime)
+            recordingEncoder.output = FileOutput(_nextFile)
+            recordingEncoder.start()
+
+            mp4File = currentFile.with_suffix(".mp4")
             subprocess.run(
-                "ffmpeg -i recordings/latest.h264 -y -c:v copy -an recordings/latest.mp4",
+                f"ffmpeg -i {currentFile} -y -c:v copy -an {mp4File}",
                 shell=True,
                 check=True,
             )  # Raises error if issue occurred
+            if mp4File.exists():
+                currentFile.unlink()
 
-            recordingStartTime = time.time()
-            recordingEncoder.output = FileOutput("recordings/latest.h264")
-            recordingEncoder.start()
+            currentFile = _nextFile
 
     # Cleanup
     recordingEncoder.stop()
+
+
+def _createRecordingFilename(timestamp: float) -> Path:
+    """Filename in 'dd-mm-yyyy_h-m' format. Timestamp is epoch time in seconds as returned by time.time()."""
+    t = time.localtime(timestamp)
+    filename = Path(f"{t.tm_mday}-{t.tm_mon}-{t.tm_year}_{t.tm_hour}-{t.tm_min}")
+    return (RECORDINGS_FOLDER / filename).with_suffix(".h264")
 
 
 cam = Picamera2()
@@ -209,7 +225,7 @@ recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
 # Set recording to main, but don't actually start recording yet
 cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()
-Path("recordings").mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
+RECORDINGS_FOLDER.mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
 isRecordingInBackground = True
 backgroundRecorderThread = Thread(recordInBackground)
 
