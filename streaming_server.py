@@ -169,7 +169,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", file).replace(
+        html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", str(file)).replace(
             "#FILENAME", file.name
         )
         content = html.encode("utf-8")
