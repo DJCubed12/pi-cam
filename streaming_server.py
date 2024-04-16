@@ -14,7 +14,7 @@ from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder, H264Encoder
 from picamera2.outputs import FileOutput
 
-from recorder import recordInBackground, SLEEP_INTERVAL
+from recorder import BackgroundRecorder
 
 PORT = 8000
 VIDEO_SIZE = (720, 480)
@@ -176,19 +176,14 @@ recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
 cam.start_encoder(recordingEncoder, name="main")
 recordingEncoder.stop()
 RECORDINGS_FOLDER.mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
-isRecordingInBackground = True
-backgroundRecorderThread = Thread(
-    target=recordInBackground,
-    args=(recordingEncoder, lambda: not isRecordingInBackground, RECORDINGS_FOLDER),
-    daemon=True,
-)
+recorder = BackgroundRecorder(recordingEncoder, RECORDINGS_FOLDER)
 
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
 streamingEncoder.output = FileOutput(streamingOutput)
 cam.start_encoder(streamingEncoder, name="lores")
 
-backgroundRecorderThread.start()  # Starts recordingEncoder internally
+recorder.start()  # Starts recordingEncoder internally
 cam.start()
 
 try:
@@ -198,6 +193,6 @@ try:
 finally:
     # Is waiting to join the thread really necessary if it is daemon?
     # Would there be problems with ffmpeg if stopped in the middle of transcoding?
-    isRecordingInBackground = False
-    backgroundRecorderThread.join(SLEEP_INTERVAL * 2)
+    recorder.signalStopRecording()
+    recorder.join(recorder.SLEEP_INTERVAL * 2)
     cam.stop()

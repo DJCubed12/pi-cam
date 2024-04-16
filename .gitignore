@@ -1,1 +1,4 @@
 recordings/*
+
+__pycache__/
+.vscode/
