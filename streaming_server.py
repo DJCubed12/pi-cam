@@ -3,6 +3,7 @@
 # Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
 
 import io
+import re
 import logging
 import subprocess
 import socketserver
@@ -54,6 +55,11 @@ class StreamingOutput(io.BufferedIOBase):
 
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
+    # SECURITY: It is important that '..' is not allowed in this match!
+    _VIDEO_FILE_PATTERN_STR = r"([-_a-zA-Z0-9]+\.(mp4|h264))$"
+    VIDEO_FILE_PATTERN = re.compile(_VIDEO_FILE_PATTERN_STR)
+    VIDEO_FILE_ARG_PATTERN = re.compile(r"\?file=" + _VIDEO_FILE_PATTERN_STR)
+
     def do_GET(self):
         if self.path == "/":
             self.send_response(301)
@@ -61,18 +67,22 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
         elif self.path == "/index.html":
             self._index()
+        elif self.path == "/stream.mjpg":
+            self._livestream()
+        elif self.path.startswith("/playback.html"):
+            self._playback()
         elif self.path == "/recordings":
-            self._recordings()
+            self.send_response(301)
+            self.send_header("Location", "/recordings/index.html")
+            self.end_headers()
+        elif self.path == "/recordings/index.html":
+            self._recordings_list()
+        elif self.path.startswith("/recordings/"):
+            self._playback_video()
         # elif self.path == "/start-rec":
         #     self._start_rec()
         # elif self.path == "/stop-rec":
         #     self._stop_rec()
-        elif self.path == "/playback.html":
-            self._playback()
-        elif self.path == "/stream.mjpg":
-            self._livestream()
-        elif self.path == "/playback.mp4":
-            self._playback_video()
         else:
             self.send_error(404)
             self.end_headers()
@@ -87,7 +97,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
-    def _recordings(self):
+    def _recordings_list(self):
         # Sort recordings by most recent
         recordings = [r for r in RECORDINGS_FOLDER.iterdir()]
         recordings.sort(key=lambda p: p.stat().st_mtime, reverse=True)
@@ -95,7 +105,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         html = ""
         for r in recordings:
             if r.suffix == ".mp4":
-                html += f'<p><a href="/playback?file={r.name}">{r.name}</a></p>\n'
+                html += f'<p><a href="/playback.html?file={r.name}">{r.name}</a></p>\n'
             elif r.suffix == ".h264":
                 html += f"<p>{r.name}</p>\n"
             # Ignore non-video files
@@ -150,7 +160,16 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             (RECORDINGS_FOLDER / Path("playback.h264")).unlink()  # Delete H264 version
 
     def _playback(self):
-        html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", "playback.mp4")
+        arg = self.VIDEO_FILE_ARG_PATTERN.match(self.path.replace("/playback.html", ""))
+        if arg:
+            filename = "recordings/" + arg.group(1)
+        else:
+            # TODO: Use some kind of default video instead
+            self.send_error(404)
+            self.end_headers()
+            return
+
+        html = PLAYBACK_TEMPLATE.replace("#VIDEO_SRC", filename)
         content = html.encode("utf-8")
 
         self.send_response(200)
@@ -160,8 +179,28 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
-        with open("recordings/latest.mp4", "rb") as file:
-            data = file.read()
+        # Ensure entire path is matched
+        fileMatch = self.VIDEO_FILE_PATTERN.match(self.path.replace("/recordings/", ""))
+        try:
+            file = RECORDINGS_FOLDER / Path(fileMatch.group(1))
+        except (AttributeError, IndexError):
+            # Kind of redundant
+            self.send_error(404)
+            self.end_headers()
+            return
+
+        # Only playback mp4 videos
+        if file.suffix != ".mp4":
+            self.send_error(403)
+            self.end_headers()
+            return
+        elif not file.exists():
+            self.send_error(404)
+            self.end_headers()
+            return
+
+        with file.open("rb") as f:
+            data = f.read()
 
         self.send_response(200)
         self.send_header("Age", 0)
