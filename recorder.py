@@ -32,7 +32,7 @@ class BackgroundRecorder(Thread):
         startTime = time.time()
         # TODO: Use CircularOutput to try to add some cushion and record as much as possible?
         currentFile = self._createRecordingFilename(startTime)
-        self.encoder.output = FileOutput(currentFile)
+        self.encoder.output = FileOutput(currentFile, currentFile.with_suffix(".ts"))
         self.encoder.start()
         while True:
             if self._stopRecording:
@@ -47,16 +47,17 @@ class BackgroundRecorder(Thread):
                 startTime = time.time()
                 # Keep currentFile until we convert and delete last h264 recording
                 _nextFile = self._createRecordingFilename(startTime)
-                self.encoder.output = FileOutput(_nextFile)
+                self.encoder.output = FileOutput(_nextFile, _nextFile.with_suffix("ts"))
                 self.encoder.start()
 
                 mp4File = currentFile.with_suffix(".mp4")
                 subprocess.run(
-                    f"ffmpeg -i {currentFile} -y -c:v copy -an {mp4File}",
+                    f"ffmpeg -i {currentFile.with_suffix(".ts")} -i {currentFile} -y -c:v copy -an {mp4File}",
                     shell=True,
                     check=True,
                 )  # Raises error if issue occurred
                 if mp4File.exists():
+                    currentFile.with_suffix("ts").unlink()
                     currentFile.unlink()
 
                 currentFile = _nextFile

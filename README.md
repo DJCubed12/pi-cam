@@ -41,6 +41,7 @@ How to [handle POST and PUT](https://stackoverflow.com/questions/66514500/how-do
 
 TODO:
 * Fix glitchy color issue on recordings (main stream)
+* Test 403 and 404 errors for /recordings/FILENAME and test bad url args for /playback.html?...
 * Move constants to config file
 * Figure out how to add timestamps to videos
   * This will make ffmpeg stop complaining AND
