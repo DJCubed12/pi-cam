@@ -123,7 +123,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
 
     def _playback_video(self):
         # Ensure entire path is matched
-        subpath = self.path.removeprefix("/" + str(RECORDING_FOLDER) + "/", "")
+        subpath = self.path.removeprefix("/" + str(RECORDING_FOLDER) + "/")
         fileMatch = self.VIDEO_FILE_PATTERN.match(subpath)
         try:
             file = RECORDING_FOLDER / Path(fileMatch.group(1))
