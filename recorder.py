@@ -8,8 +8,6 @@ from threading import Thread
 from picamera2.outputs import FileOutput
 from picamera2.encoders import H264Encoder
 
-from resources import RECORDING_INTERVAL
-
 
 class BackgroundRecorder(Thread):
     """Records Pi-Cam's feed and saves to file at regular intervals. Call start() to start background recording and signalStopRecording to gracefully stop."""
@@ -21,10 +19,14 @@ class BackgroundRecorder(Thread):
     # -loglevel can be info, warning, or error
     FFMPEG_COMMAND = "ffmpeg -hide_banner -loglevel info -y -i %s  -c:v copy -an %s"
 
-    def __init__(self, encoder: H264Encoder, outputFolder: Path):
+    def __init__(
+        self, encoder: H264Encoder, outputFolder: Path, recordingInterval: int = 60
+    ):
+        """Ensure that the encoder is NOT running when BackgroundRecorder.start() is called. recordingInterval should be in seconds."""
         self.encoder = encoder
         self.outputFolder = outputFolder
         self._stopRecording = False
+        self.recordingInterval = recordingInterval
         Thread.__init__(self, daemon=True)
 
     def signalStopRecording(self):
@@ -32,8 +34,7 @@ class BackgroundRecorder(Thread):
         self._stopRecording = True
 
     def run(self):
-        # TODO: Current this does NOT allow simultaneous recording on encoder. Fix this by being more careful with encoder.output.
-
+        """recordingLength is in seconds."""
         startTime = time.time()
         # TODO: Use CircularOutput to try to add some cushion and record as much as possible?
         currentFile = self._createRecordingFilename(startTime)
@@ -43,7 +44,7 @@ class BackgroundRecorder(Thread):
             if self._stopRecording:
                 # Program has stopped or attempt has been made to stop recording
                 break
-            elif time.time() - startTime < RECORDING_INTERVAL:
+            elif time.time() - startTime < self.recordingInterval:
                 time.sleep(self.SLEEP_INTERVAL)
             else:
                 # Stop, save, restart
@@ -67,6 +68,6 @@ class BackgroundRecorder(Thread):
                 currentFile = _nextFile
 
     def _createRecordingFilename(self, timestamp: float) -> Path:
-        """Filename in 'd-m-yyyy_h-m' format. Timestamp is epoch time in seconds as returned by time.time()."""
+        """Filename in 'dd-mm-yyyy_hhmmss' format. Timestamp is epoch time in seconds as returned by time.time()."""
         filename = time.strftime("%d-%m-%Y_%Hh%Mm%Ss", time.localtime(timestamp))
         return (self.outputFolder / Path(filename)).with_suffix(".h264")

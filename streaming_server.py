@@ -33,7 +33,7 @@ def configureLogging():
 
 
 def serverSetup():
-    """Configure global variables, start camera and BackgroundRecorder, and serve HTTPServer."""
+    """Configure global variables, start camera and recorder, and serve HTTPServer."""
     logging.info("Server starting up...")
 
     cam.configure(

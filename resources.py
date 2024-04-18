@@ -51,7 +51,7 @@ cam = Picamera2()
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
 recordingEncoder = H264Encoder()
-recorder = BackgroundRecorder(recordingEncoder, RECORDING_FOLDER)
+recorder = BackgroundRecorder(recordingEncoder, RECORDING_FOLDER, RECORDING_INTERVAL)
 
 
 if __name__ == "__main__":
