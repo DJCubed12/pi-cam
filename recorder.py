@@ -16,6 +16,10 @@ class BackgroundRecorder(Thread):
     # This should be somewhat small to minimize shutdown time from thread.join()
     SLEEP_INTERVAL: int = 5  # In seconds
 
+    # Use % to replace input filename and output filename (in that order)
+    # -loglevel can be info, warning, or error
+    FFMPEG_COMMAND = "ffmpeg -hide_banner -loglevel info -y -i %s  -c:v copy -an %s"
+
     def __init__(self, encoder: H264Encoder, outputFolder: Path = Path("recordings")):
         self.encoder = encoder
         self.outputFolder = outputFolder
@@ -52,7 +56,7 @@ class BackgroundRecorder(Thread):
 
                 mp4File = currentFile.with_suffix(".mp4")
                 subprocess.run(
-                    f"ffmpeg -i {currentFile} -y -c:v copy -an {mp4File}",
+                    self.FFMPEG_COMMAND % (currentFile, mp4File),
                     shell=True,
                     check=True,
                 )  # Raises error if issue occurred
@@ -63,8 +67,5 @@ class BackgroundRecorder(Thread):
 
     def _createRecordingFilename(self, timestamp: float) -> Path:
         """Filename in 'd-m-yyyy_h-m' format. Timestamp is epoch time in seconds as returned by time.time()."""
-        t = time.localtime(timestamp)
-        filename = Path(
-            f"{t.tm_mday}-{t.tm_mon}-{t.tm_year}_{t.tm_hour}h{t.tm_min}m{t.tm_sec}s"
-        )
-        return (self.outputFolder / filename).with_suffix(".h264")
+        filename = time.strftime("%d-%m-%Y_%Ih%Mm%Ss", time.localtime(timestamp))
+        return (self.outputFolder / Path(filename)).with_suffix(".h264")

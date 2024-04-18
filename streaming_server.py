@@ -3,6 +3,7 @@
 # Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
 
 import io
+import os
 import re
 import logging
 import subprocess
@@ -287,6 +288,13 @@ def main():
         recorder.join(recorder.SLEEP_INTERVAL * 2)
         cam.stop()
 
+
+##################
+# LOGGING CONFIG #
+##################
+
+Picamera2.set_logging(Picamera2.ERROR)
+os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
 
 ####################
 # GLOBAL VARIABLES #

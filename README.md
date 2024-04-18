@@ -34,10 +34,18 @@ Watch recorded mp4 files here.
   * [Picamera2 examples](https://github.com/ArduCAM/picamera2_examples/tree/main)
 * How to record & stream picamera output simultaneously
   * [record and stream video from camera simultaneously](https://raspberrypi.stackexchange.com/questions/27041/record-and-stream-video-from-camera-simultaneously) (Rasp Pi Stack Overflow)
+* Ffmpeg timestamp issue:
+  * [Stack Overflow (no answers)](https://stackoverflow.com/questions/75625226/ffmpeg-set-pts-for-vfr-video-from-list-of-values)
+  * [mkvmerge](https://mkvtoolnix.download/doc/mkvmerge.html#mkvmerge.external_timestamp_files)
 
 ## Dev Notes
 
 How to [handle POST and PUT](https://stackoverflow.com/questions/66514500/how-do-i-configure-a-python-server-for-post) in Python HTTPServer.
+
+To find the streaming server process when ssh'ing back in:
+```bash
+ps -f -u DJCubed12 -U DJCubed12
+```
 
 TODO:
 * Fix glitchy color issue on recordings (main stream)
