@@ -7,7 +7,6 @@ import os
 import re
 import logging
 import subprocess
-import socketserver
 from pathlib import Path
 from http import server
 from threading import Condition
@@ -64,6 +63,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
     _VIDEO_FILE_PATTERN_STR = r"([-_a-zA-Z0-9]+\.(mp4|h264))$"
     VIDEO_FILE_PATTERN = re.compile(_VIDEO_FILE_PATTERN_STR)
     VIDEO_FILE_ARG_PATTERN = re.compile(r"\?file=" + _VIDEO_FILE_PATTERN_STR)
+
+    # Override log_request, log_error, log_message for custom error messages.
 
     def do_GET(self):
         if self.path == "/":
@@ -243,7 +244,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             )
 
 
-class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
+class StreamingServer(server.ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 

@@ -67,5 +67,5 @@ class BackgroundRecorder(Thread):
 
     def _createRecordingFilename(self, timestamp: float) -> Path:
         """Filename in 'd-m-yyyy_h-m' format. Timestamp is epoch time in seconds as returned by time.time()."""
-        filename = time.strftime("%d-%m-%Y_%Ih%Mm%Ss", time.localtime(timestamp))
+        filename = time.strftime("%d-%m-%Y_%Hh%Mm%Ss", time.localtime(timestamp))
         return (self.outputFolder / Path(filename)).with_suffix(".h264")
