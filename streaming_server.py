@@ -17,6 +17,10 @@ from picamera2.outputs import FileOutput
 
 from recorder import BackgroundRecorder
 
+####################
+# GLOBAL CONSTANTS #
+####################
+
 PORT = 8000
 VIDEO_SIZE = (720, 480)
 RECORDING_INTERVAL = 60  # In seconds
@@ -243,36 +247,55 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     daemon_threads = True
 
 
-cam = Picamera2()
-cam.configure(
-    cam.create_video_configuration(
-        main={"size": VIDEO_SIZE}, lores={"size": VIDEO_SIZE}
+########
+# MAIN #
+########
+
+
+def main():
+    """Configure global variables, start camera and BackgroundRecorder, and serve HTTPServer."""
+    logging.log("Server starting up...")
+
+    cam.configure(
+        cam.create_video_configuration(
+            main={"size": VIDEO_SIZE}, lores={"size": VIDEO_SIZE}
+        )
     )
-)
 
+    recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
+    # Set recording to main, but don't actually start recording yet
+    cam.start_encoder(recordingEncoder, name="main")
+    recordingEncoder.stop()
+    RECORDINGS_FOLDER.mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
+    recorder = BackgroundRecorder(recordingEncoder, RECORDINGS_FOLDER)
+
+    streamingEncoder.output = FileOutput(streamingOutput)
+    cam.start_encoder(streamingEncoder, name="lores")
+
+    recorder.start()  # Starts recordingEncoder internally
+    cam.start()
+
+    try:
+        address = ("", PORT)
+        server = StreamingServer(address, StreamingHandler)
+        logging.log("Server started")
+        server.serve_forever()
+    finally:
+        # Is waiting to join the thread really necessary if it is daemon?
+        # Would there be problems with ffmpeg if stopped in the middle of transcoding?
+        recorder.signalStopRecording()
+        recorder.join(recorder.SLEEP_INTERVAL * 2)
+        cam.stop()
+
+
+####################
+# GLOBAL VARIABLES #
+####################
+
+cam = Picamera2()
 recordingEncoder = H264Encoder()
-recordingEncoder.output = FileOutput("/dev/null")  # Can't start without a file
-# Set recording to main, but don't actually start recording yet
-cam.start_encoder(recordingEncoder, name="main")
-recordingEncoder.stop()
-RECORDINGS_FOLDER.mkdir(exist_ok=True)  # Make recordings dir if it doesn't exist
-recorder = BackgroundRecorder(recordingEncoder, RECORDINGS_FOLDER)
-
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
-streamingEncoder.output = FileOutput(streamingOutput)
-cam.start_encoder(streamingEncoder, name="lores")
 
-recorder.start()  # Starts recordingEncoder internally
-cam.start()
-
-try:
-    address = ("", PORT)
-    server = StreamingServer(address, StreamingHandler)
-    server.serve_forever()
-finally:
-    # Is waiting to join the thread really necessary if it is daemon?
-    # Would there be problems with ffmpeg if stopped in the middle of transcoding?
-    recorder.signalStopRecording()
-    recorder.join(recorder.SLEEP_INTERVAL * 2)
-    cam.stop()
+if __name__ == "__main__":
+    main()
