@@ -36,8 +36,8 @@ _config.read("pi-cam.ini")
 
 PORT = int(_config.get("DEFAULT", "PORT"))
 VIDEO_SIZE = (
-    _config.get("DEFAULT", "VIDEO_WIDTH"),
-    _config.get("DEFAULT", "VIDEO_HEIGHT"),
+    int(_config.get("DEFAULT", "VIDEO_WIDTH")),
+    int(_config.get("DEFAULT", "VIDEO_HEIGHT")),
 )
 RECORDING_INTERVAL = int(_config.get("DEFAULT", "RECORDING_INTERVAL"))
 RECORDING_FOLDER = Path(_config.get("DEFAULT", "RECORDING_FOLDER"))
