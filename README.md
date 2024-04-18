@@ -32,6 +32,7 @@ Watch recorded mp4 files here.
 * [The Picamera2 Library](https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf) (use libcamera in Python)
   * [picamera](https://github.com/raspberrypi/picamera2/tree/main) (Github)
   * [Picamera2 examples](https://github.com/ArduCAM/picamera2_examples/tree/main)
+* The [example](https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py) code that most of this project was based off of.
 * How to record & stream picamera output simultaneously
   * [record and stream video from camera simultaneously](https://raspberrypi.stackexchange.com/questions/27041/record-and-stream-video-from-camera-simultaneously) (Rasp Pi Stack Overflow)
 * Ffmpeg timestamp issue:

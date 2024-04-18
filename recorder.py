@@ -8,11 +8,12 @@ from threading import Thread
 from picamera2.outputs import FileOutput
 from picamera2.encoders import H264Encoder
 
+from resources import RECORDING_INTERVAL
+
 
 class BackgroundRecorder(Thread):
     """Records Pi-Cam's feed and saves to file at regular intervals. Call start() to start background recording and signalStopRecording to gracefully stop."""
 
-    RECORDING_INTERVAL = 60  # In seconds
     # This should be somewhat small to minimize shutdown time from thread.join()
     SLEEP_INTERVAL: int = 5  # In seconds
 
@@ -20,7 +21,7 @@ class BackgroundRecorder(Thread):
     # -loglevel can be info, warning, or error
     FFMPEG_COMMAND = "ffmpeg -hide_banner -loglevel info -y -i %s  -c:v copy -an %s"
 
-    def __init__(self, encoder: H264Encoder, outputFolder: Path = Path("recordings")):
+    def __init__(self, encoder: H264Encoder, outputFolder: Path):
         self.encoder = encoder
         self.outputFolder = outputFolder
         self._stopRecording = False
@@ -42,7 +43,7 @@ class BackgroundRecorder(Thread):
             if self._stopRecording:
                 # Program has stopped or attempt has been made to stop recording
                 break
-            elif time.time() - startTime < self.RECORDING_INTERVAL:
+            elif time.time() - startTime < RECORDING_INTERVAL:
                 time.sleep(self.SLEEP_INTERVAL)
             else:
                 # Stop, save, restart
