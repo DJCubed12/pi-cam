@@ -254,7 +254,7 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 
 def main():
     """Configure global variables, start camera and BackgroundRecorder, and serve HTTPServer."""
-    logging.log("Server starting up...")
+    logging.info("Server starting up...")
 
     cam.configure(
         cam.create_video_configuration(
@@ -278,7 +278,7 @@ def main():
     try:
         address = ("", PORT)
         server = StreamingServer(address, StreamingHandler)
-        logging.log("Server started")
+        logging.info("Server started")
         server.serve_forever()
     finally:
         # Is waiting to join the thread really necessary if it is daemon?
