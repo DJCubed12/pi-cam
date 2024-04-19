@@ -28,11 +28,6 @@ class StreamingServer(server.ThreadingHTTPServer):
     daemon_threads = True
 
 
-def configureLogging():
-    Picamera2.set_logging(Picamera2.ERROR)
-    os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
-
-
 def setup() -> BackgroundRecorder:
     """Configure global variables, start camera and recorder, and serve HTTPServer."""
     logger.info("Server starting up...")
@@ -78,7 +73,6 @@ def server():
 
 
 if __name__ == "__main__":
-    configureLogging()
     recorder = setup()
     server()
 

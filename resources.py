@@ -1,5 +1,6 @@
 """Global Picamera2 related resource to be imported by other files."""
 
+import os
 import configparser
 from pathlib import Path
 from io import BufferedIOBase
@@ -9,6 +10,10 @@ from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder
 
 from logger import Logger
+
+# Remove Picamera2 loggign
+Picamera2.set_logging(Picamera2.ERROR)
+os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
 
 
 ##############
