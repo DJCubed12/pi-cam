@@ -43,6 +43,9 @@ VIDEO_SIZE = (
 RECORDING_INTERVAL = int(_config.get("DEFAULT", "RECORDING_INTERVAL"))
 RECORDING_FOLDER = Path(_config.get("DEFAULT", "RECORDING_FOLDER"))
 
+_INFO_LOG = Path(_config.get("DEFAULT", "INFO_LOG"))
+_ERROR_LOG = Path(_config.get("DEFAULT", "ERROR_LOG"))
+
 
 ####################
 # GLOBAL VARIABLES #
@@ -53,7 +56,7 @@ streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
 recordingEncoder = H264Encoder()
 recorder = BackgroundRecorder(recordingEncoder, RECORDING_FOLDER, RECORDING_INTERVAL)
-logger = Logger()
+logger = Logger(_INFO_LOG, _ERROR_LOG)
 
 
 if __name__ == "__main__":

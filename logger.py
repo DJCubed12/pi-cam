@@ -10,20 +10,9 @@ class Logger:
 
     PREFIX_FORMAT = "[%b %d %I:%M:%S %p] "
 
-    def __init__(self):
-        self._infoFile = None
-        self._errorFile = None
-
-        if len(sys.argv) > 1:
-            try:
-                self._infoFile = Path(sys.argv[1])
-            except TypeError:
-                pass
-        if len(sys.argv) > 2:
-            try:
-                self._errorFile = Path(sys.argv[2])
-            except TypeError:
-                pass
+    def __init__(self, infoFile=None, errorFile=None):
+        self._infoFile = infoFile
+        self._errorFile = errorFile
 
     def debug(self, msg: str):
         """Print a debug message to stdout."""
@@ -41,9 +30,9 @@ class Logger:
 
         if level >= 2 and self._errorFile != None:
             with open(self._errorFile, "a") as log:
-                log.write(prefix + msg + '\n')
+                log.write(prefix + msg + "\n")
         elif level >= 1 and self._infoFile != None:
             with open(self._infoFile, "a") as log:
-                log.write(prefix + msg + '\n')
+                log.write(prefix + msg + "\n")
         else:
             print(prefix + msg)

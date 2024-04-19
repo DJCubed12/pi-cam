@@ -7,7 +7,9 @@ This is a Raspberry Pi Security Camera.
 Run with:
 
 ```bash
-python streaming_server.py &
+python streaming_server.py >> log.log 2>> error.log &
+# OR
+nohup python streaming_server.py &
 ```
 
 ## Documentation
@@ -42,6 +44,8 @@ Watch recorded mp4 files here.
 ## Dev Notes
 
 How to [handle POST and PUT](https://stackoverflow.com/questions/66514500/how-do-i-configure-a-python-server-for-post) in Python HTTPServer.
+
+When running python as a background task, any operations to stdout or stderr will cause the program to hang. When the user logs out or the terminal is closed, python will attempt to open stdout/err but will be forced to wait until it is in the foreground and can do so.
 
 To find the streaming server process when ssh'ing back in:
 ```bash
