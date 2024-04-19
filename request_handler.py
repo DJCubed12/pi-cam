@@ -3,7 +3,11 @@ import logging
 from pathlib import Path
 from http import server
 
-from resources import streamingOutput, VIDEO_SIZE, RECORDING_FOLDER
+from resources import streamingOutput, logger, VIDEO_SIZE, RECORDING_FOLDER
+
+
+# SECURITY: It is important that '..' is not allowed in this match!
+_VIDEO_FILE_PATTERN_STR = r"([-_a-zA-Z0-9]+\.(mp4|h264))$"
 
 
 ##################
@@ -37,12 +41,8 @@ with open("src/recordings.template.html", "r") as file:
 
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
-    # SECURITY: It is important that '..' is not allowed in this match!
-    _VIDEO_FILE_PATTERN_STR = r"([-_a-zA-Z0-9]+\.(mp4|h264))$"
     VIDEO_FILE_PATTERN = re.compile(_VIDEO_FILE_PATTERN_STR)
     VIDEO_FILE_ARG_PATTERN = re.compile(r"\?file=" + _VIDEO_FILE_PATTERN_STR)
-
-    # Override log_request, log_error, log_message for custom error messages.
 
     def do_GET(self):
         if self.path == "/":
@@ -175,6 +175,15 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 self.wfile.write(frame)
                 self.wfile.write(b"\r\n")
         except Exception as e:
-            logging.warning(
-                "Removed streaming client %s: %s", self.client_address, str(e)
-            )
+            self.log_info(f"Removed streaming client {self.client_address}: {str(e)}")
+
+    def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
+        logger.info(f"{self.address_string()} - '{self.requestline}' - {code}")
+
+    def log_info(self, msg: str):
+        logger.info(f"{self.address_string()} - {msg}")
+
+    def log_error(self, msg: str, *args: re.Any) -> None:
+        if args:
+            msg = msg % args
+        logger.error(f"{self.address_string()} - {msg}")

@@ -9,6 +9,7 @@ from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder, H264Encoder
 
 from recorder import BackgroundRecorder
+from logger import Logger
 
 
 ##############
@@ -52,6 +53,7 @@ streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
 recordingEncoder = H264Encoder()
 recorder = BackgroundRecorder(recordingEncoder, RECORDING_FOLDER, RECORDING_INTERVAL)
+logger = Logger()
 
 
 if __name__ == "__main__":

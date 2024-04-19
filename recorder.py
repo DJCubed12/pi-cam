@@ -56,6 +56,7 @@ class BackgroundRecorder(Thread):
                 self.encoder.output = FileOutput(_nextFile)
                 self.encoder.start()
 
+                # TODO: Properly log file saves and errors (and handle errors)
                 mp4File = currentFile.with_suffix(".mp4")
                 subprocess.run(
                     self.FFMPEG_COMMAND % (currentFile, mp4File),

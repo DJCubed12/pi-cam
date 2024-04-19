@@ -3,7 +3,6 @@
 # Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
 
 import os
-import logging
 from http import server
 
 from picamera2 import Picamera2
@@ -15,6 +14,7 @@ from resources import (
     streamingEncoder,
     recordingEncoder,
     recorder,
+    logger,
     PORT,
     VIDEO_SIZE,
     RECORDING_FOLDER,
@@ -34,7 +34,7 @@ def configureLogging():
 
 def serverSetup():
     """Configure global variables, start camera and recorder, and serve HTTPServer."""
-    logging.info("Server starting up...")
+    logger.info("Server starting up...")
 
     cam.configure(
         cam.create_video_configuration(
@@ -59,7 +59,7 @@ def main():
     try:
         address = ("", PORT)
         server = StreamingServer(address, StreamingHandler)
-        logging.info("Server started")
+        logger.info("Server started")
         server.serve_forever()
     finally:
         # Is waiting to join the thread really necessary if it is daemon?
