@@ -15,7 +15,6 @@ from resources import (
     cam,
     streamingOutput,
     streamingEncoder,
-    recorder,
     logger,
     PORT,
     VIDEO_SIZE,
