@@ -77,7 +77,12 @@ When running python as a background task, any operations to stdout or stderr wil
 
 To find the streaming server process when ssh'ing back in:
 ```bash
-ps -f -u DJCubed12 -U DJCubed12
+ps -f -u DJCubed12
+```
+
+To gracefully kill:
+```bash
+kill -2 <PID>
 ```
 
 TODO:

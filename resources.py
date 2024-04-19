@@ -6,9 +6,8 @@ from io import BufferedIOBase
 from threading import Condition
 
 from picamera2 import Picamera2
-from picamera2.encoders import MJPEGEncoder, H264Encoder
+from picamera2.encoders import MJPEGEncoder
 
-from recorder import BackgroundRecorder
 from logger import Logger
 
 
@@ -54,8 +53,6 @@ _ERROR_LOG = Path(_config.get("DEFAULT", "ERROR_LOG"))
 cam = Picamera2()
 streamingOutput = StreamingOutput()
 streamingEncoder = MJPEGEncoder()
-recordingEncoder = H264Encoder()
-recorder = BackgroundRecorder(recordingEncoder, RECORDING_FOLDER, RECORDING_INTERVAL)
 logger = Logger(_INFO_LOG, _ERROR_LOG)
 
 

@@ -1,8 +1,6 @@
 """Log server access, info, and errors to files or stdout."""
 
-import sys
 import time
-from pathlib import Path
 
 
 class Logger:
