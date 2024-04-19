@@ -183,7 +183,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
     def log_info(self, msg: str):
         logger.info(f"{self.address_string()} - {msg}")
 
-    def log_error(self, msg: str, *args: re.Any) -> None:
+    def log_error(self, msg: str, *args) -> None:
         if args:
             msg = msg % args
         logger.error(f"{self.address_string()} - {msg}")

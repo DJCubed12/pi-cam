@@ -8,7 +8,7 @@ from pathlib import Path
 class Logger:
     """Prints info, errors, and debugging info. If a command line arg was provided, Logger will attempt to write all info and error logs to that file. If a second command line arg is provided, errors will be logged to that file instead."""
 
-    PREFIX_FORMAT = "[%d/%b/%y %I:%M:%S %p] "
+    PREFIX_FORMAT = "[%b %d %I:%M:%S %p] "
 
     def __init__(self):
         self._infoFile = None
@@ -41,9 +41,9 @@ class Logger:
 
         if level >= 2 and self._errorFile != None:
             with open(self._errorFile, "a") as log:
-                log.write(prefix + msg)
+                log.write(prefix + msg + '\n')
         elif level >= 1 and self._infoFile != None:
             with open(self._infoFile, "a") as log:
-                log.write(prefix + msg)
+                log.write(prefix + msg + '\n')
         else:
             print(prefix + msg)
