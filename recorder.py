@@ -8,6 +8,8 @@ from threading import Thread
 from picamera2.outputs import FileOutput
 from picamera2.encoders import H264Encoder
 
+from resources import logger
+
 
 class BackgroundRecorder(Thread):
     """Records Pi-Cam's feed and saves to file at regular intervals. Call start() to start background recording and signalStopRecording to gracefully stop."""
@@ -17,7 +19,7 @@ class BackgroundRecorder(Thread):
 
     # Use % to replace input filename and output filename (in that order)
     # -loglevel can be info, warning, or error
-    FFMPEG_COMMAND = "ffmpeg -hide_banner -loglevel info -y -i %s  -c:v copy -an %s"
+    FFMPEG_COMMAND = "ffmpeg -hide_banner -loglevel warning -y -i %s  -c:v copy -an %s"
 
     def __init__(
         self, encoder: H264Encoder, outputFolder: Path, recordingInterval: int = 60
@@ -51,22 +53,33 @@ class BackgroundRecorder(Thread):
                 self.encoder.stop()
 
                 startTime = time.time()
-                # Keep currentFile until we convert and delete last h264 recording
+                # Start next recording before we convert the last one
                 _nextFile = self._createRecordingFilename(startTime)
                 self.encoder.output = FileOutput(_nextFile)
                 self.encoder.start()
 
-                # TODO: Properly log file saves and errors (and handle errors)
+                logger.info(f"Converting {currentFile.name} to mp4...")
                 mp4File = currentFile.with_suffix(".mp4")
-                subprocess.run(
-                    self.FFMPEG_COMMAND % (currentFile, mp4File),
-                    shell=True,
-                    check=True,
-                )  # Raises error if issue occurred
-                if mp4File.exists():
-                    currentFile.unlink()
-
-                currentFile = _nextFile
+                try:
+                    res = subprocess.run(
+                        self.FFMPEG_COMMAND % (currentFile, mp4File),
+                        shell=True,
+                        check=True,  # Raises error if issue occurred
+                        capture_output=True,
+                        encoding="utf-8",
+                    )
+                    if res.stdout:
+                        logger.info(res.stdout)
+                    if res.stderr:
+                        logger.error(res.stderr)
+                    logger.info(f"{mp4File.name} successfully saved.")
+                    currentFile.unlink()  # Delete .h264 version
+                except subprocess.CalledProcessError as e:
+                    logger.error(
+                        f"Error converting {currentFile.name} to mp4: \n{e.stderr}"
+                    )
+                finally:
+                    currentFile = _nextFile
 
     def _createRecordingFilename(self, timestamp: float) -> Path:
         """Filename in 'dd-mm-yyyy_hhmmss' format. Timestamp is epoch time in seconds as returned by time.time()."""
