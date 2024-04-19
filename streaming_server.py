@@ -2,10 +2,8 @@
 
 # Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
 
-import os
 from http import server
 
-from picamera2 import Picamera2
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FileOutput
 
