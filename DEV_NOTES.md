@@ -41,16 +41,6 @@ Resources, links, notes, and things to do in terms of future development.
 
 ## Notes
 
-To find the streaming server process when ssh'ing back in:
-```bash
-ps -f -u DJCubed12
-```
-
-To gracefully kill:
-```bash
-kill -2 <PID>
-```
-
 ### Camera Stopping issue
 
 Recorded 20 min intervals successfully from 12:40am to 6:21am. MP4 files were 144 MB apiece until 3:41am, where they started gradually dropping after each recordings. 136, 106, 65, ..., and 25 MB on the last recording at 6:21am until all further h264 files are empty. Website and files were still successfully served tho.
