@@ -25,7 +25,9 @@ Run the streaming server and automatic recorder with:
 nohup python streaming_server.py > error.log &
 ```
 
-This will host a website on port `8000` (unless changed in `pi-cam.ini`) that serves the live camera feed, previously recorded videos, and a viewer for these videos. The website will be available at `http://<Pi's IP address>:<Port>`.
+This will host a website on port `8000` (unless changed in `pi-cam.ini`) that serves the live camera feed, previously recorded videos, and a viewer for these videos. The website will be available at `http://<Pi's IP address>:8000`.
+
+![Livestream](readme-images/project-image.jpg)
 
 The automatic recorder within the streaming server saves files to `recordings/`. As this folder will fill up with large files, it is necessary to delete old ones every so often.
 
@@ -77,12 +79,15 @@ The server attempts to safely save it's current recording file when shut down. P
 
 * `/index.html`
   * This is the main page. You can view the camera's live feed here.
+  ![Livestream](readme-images/livestream.jpg)
 * `/recordings/index.html`
   * Pi-Cam constantly records it's output and saves them as mp4 files which are listed here.
   * Listed files have links to take you to their playback pages.
+  ![Recordings](readme-images/recordings.jpg)
 * `/playback.html`
   * Watch recorded mp4 files here.
   * This endpoint takes one URL parameter, `file` which must be an `mp4` filename available in the `recordings/` directory on the Pi itself.
+  ![Recording playback](readme-images/playback.jpg)
 
 ### Configuration
 
