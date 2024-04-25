@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-
-# Based off the code at https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py
+"""Entry point file for the Pi-Cam Streaming Server. Please kill using a Keyboard Interrupt for graceful shutdowns."""
 
 from http import server
 
@@ -27,7 +26,7 @@ class StreamingServer(server.ThreadingHTTPServer):
 
 
 def setup() -> BackgroundRecorder:
-    """Configure global variables, start camera and recorder, and serve HTTPServer."""
+    """Configure global variables and start the camera and recorder."""
     logger.info("Server starting up...")
 
     cam.configure(
@@ -56,6 +55,7 @@ def setup() -> BackgroundRecorder:
 
 
 def server():
+    """Server HTTP requests forever (until KeyboardInterrupt or Exception)."""
     try:
         address = ("", PORT)
         server = StreamingServer(address, StreamingHandler)
@@ -74,6 +74,7 @@ if __name__ == "__main__":
     recorder = setup()
     server()
 
+    # Graceful shutdown
     # Is waiting to join the thread really necessary if it is daemon?
     # Would there be problems with ffmpeg if stopped in the middle of transcoding?
     recorder.signalStopRecording()

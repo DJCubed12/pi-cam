@@ -1,4 +1,4 @@
-"""Global Picamera2 related resource to be imported by other files."""
+"""Global resources and configurations to be imported by other files."""
 
 import os
 import configparser
@@ -11,7 +11,7 @@ from picamera2.encoders import MJPEGEncoder
 
 from logger import Logger
 
-# Remove Picamera2 loggign
+# Remove Picamera2 logging
 Picamera2.set_logging(Picamera2.ERROR)
 os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
 
@@ -62,6 +62,7 @@ logger = Logger(_INFO_LOG, _ERROR_LOG)
 
 
 if __name__ == "__main__":
+    # For debugging: making sure pi-cam.ini is being read properly
     print("Project Configuration is:")
     for secName, section in _config.items():
         print("SECTION:", secName)

@@ -1,10 +1,10 @@
-"""Log server access, info, and errors to files or stdout."""
+"""Custom logger for server access, info, and errors to files or stdout."""
 
 import time
 
 
 class Logger:
-    """Prints info, errors, and debugging info. If a command line arg was provided, Logger will attempt to write all info and error logs to that file. If a second command line arg is provided, errors will be logged to that file instead."""
+    """Prints info, errors, and debugging info to stdout or specified files. General info and error logs can be separated into different files."""
 
     PREFIX_FORMAT = "[%b %d %I:%M:%S %p] "
 

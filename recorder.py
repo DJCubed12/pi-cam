@@ -12,7 +12,7 @@ from resources import logger
 
 
 class BackgroundRecorder(Thread):
-    """Records Pi-Cam's feed and saves to file at regular intervals. Call start() to start background recording and signalStopRecording to gracefully stop."""
+    """Records Pi-Cam's feed and saves to file at regular intervals. Call start() to start background recording and signalStopRecording() to gracefully stop."""
 
     # This should be somewhat small to minimize shutdown time from thread.join()
     SLEEP_INTERVAL: int = 5  # In seconds
@@ -32,11 +32,11 @@ class BackgroundRecorder(Thread):
         Thread.__init__(self, daemon=True)
 
     def signalStopRecording(self):
-        """Signal the recorder thread to stop the recording."""
+        """Signal the recorder thread to stop the recording. NOTE: The recording is not stopped immediately; expect to wait a few seconds."""
         self._stopRecording = True
 
     def run(self):
-        """recordingLength is in seconds."""
+        """Record camera's output to chunked files until signaled to stop."""
         startTime = time.time()
         # TODO: Use CircularOutput to try to add some cushion and record as much as possible?
         currentFile = self._createRecordingFilename(startTime)
@@ -44,7 +44,6 @@ class BackgroundRecorder(Thread):
         self.encoder.start()
         while True:
             if self._stopRecording:
-                # Program has stopped or attempt has been made to stop recording
                 break
             elif time.time() - startTime < self.recordingInterval:
                 time.sleep(self.SLEEP_INTERVAL)

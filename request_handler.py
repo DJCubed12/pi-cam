@@ -1,5 +1,6 @@
+"""Define and implement HTTP endpoints."""
+
 import re
-import logging
 from pathlib import Path
 from http import server
 
@@ -45,6 +46,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
     VIDEO_FILE_ARG_PATTERN = re.compile(r"\?file=" + _VIDEO_FILE_PATTERN_STR)
 
     def do_GET(self):
+        """Define all HTTP endpoints."""
         if self.path == "/":
             self.send_response(301)
             self.send_header("Location", "/index.html")
@@ -68,6 +70,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
 
     def _index(self):
+        """Main page; display livestream."""
         html = LIVESTREAM_TEMPLATE  # Replace any template variables here
         content = html.encode("utf-8")
 
@@ -78,6 +81,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _recordings_list(self):
+        """List video files (h264 or mp4) in the recordings folder."""
         # Sort recordings by most recent
         recordings = [r for r in RECORDING_FOLDER.iterdir()]
         recordings.sort(key=lambda p: p.stat().st_mtime, reverse=True)
@@ -85,6 +89,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         html = ""
         for r in recordings:
             if r.suffix == ".mp4":
+                # Link mp4 files to their corresponding playback pages
                 html += f'<p><a href="/playback.html?file={r.name}">{r.name}</a></p>\n'
             elif r.suffix == ".h264":
                 html += f"<p>{r.name}</p>\n"
@@ -101,11 +106,13 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback(self):
+        """MP4 playback page. A valid mp4 filename must be passed in the `file` URL parameter."""
+
         arg = self.VIDEO_FILE_ARG_PATTERN.match(self.path.replace("/playback.html", ""))
         if arg:
             file = RECORDING_FOLDER / Path(arg.group(1))
         else:
-            # TODO: Use some kind of default video instead
+            # TODO: Use some kind of default video instead?
             self.send_error(404)
             self.end_headers()
             return
@@ -122,6 +129,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _playback_video(self):
+        """Send mp4 video file that is specified by the `file` URL parameter (Content-Type: video/mp4)."""
         # Ensure entire path is matched
         subpath = self.path.removeprefix("/" + str(RECORDING_FOLDER) + "/")
         fileMatch = self.VIDEO_FILE_PATTERN.match(subpath)
@@ -156,7 +164,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _livestream(self):
-        """This is code from: https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py. It's best to leave it alone."""
+        """Continuously send JPEG images to client from live video feed (Content-Type: image/jpeg). This is code from: https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py. It's best to leave it alone."""
         self.send_response(200)
         self.send_header("Age", 0)
         self.send_header("Cache-Control", "no-cache, private")
@@ -178,12 +186,15 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.log_info(f"Removed streaming client {self.client_address}: {str(e)}")
 
     def log_request(self, code: int | str = "-", size: int | str = "-") -> None:
+        """Override request logging."""
         logger.info(f"{self.address_string()} - '{self.requestline}' - {code}")
 
     def log_info(self, msg: str):
+        """Override info logging."""
         logger.info(f"{self.address_string()} - {msg}")
 
     def log_error(self, msg: str, *args) -> None:
+        """Override error logging."""
         if args:
             msg = msg % args
         logger.error(f"{self.address_string()} - {msg}")
