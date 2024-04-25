@@ -4,19 +4,21 @@
 
 from http import server
 
+from picamera2 import Transform
 from picamera2.encoders import H264Encoder
 from picamera2.outputs import FileOutput
 
 from recorder import BackgroundRecorder
 from resources import (
-    RECORDING_INTERVAL,
     cam,
     streamingOutput,
     streamingEncoder,
     logger,
     PORT,
     VIDEO_SIZE,
+    VERTICAL_FLIP,
     RECORDING_FOLDER,
+    RECORDING_INTERVAL,
 )
 from request_handler import StreamingHandler
 
@@ -32,7 +34,9 @@ def setup() -> BackgroundRecorder:
 
     cam.configure(
         cam.create_video_configuration(
-            main={"size": VIDEO_SIZE}, lores={"size": VIDEO_SIZE}
+            main={"size": VIDEO_SIZE},
+            lores={"size": VIDEO_SIZE},
+            transform=Transform(vflip=VERTICAL_FLIP),
         )
     )
 

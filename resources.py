@@ -44,6 +44,8 @@ VIDEO_SIZE = (
     int(_config.get("DEFAULT", "VIDEO_WIDTH")),
     int(_config.get("DEFAULT", "VIDEO_HEIGHT")),
 )
+VERTICAL_FLIP = _config.getboolean("DEFAULT", "VERTICAL_FLIP")
+
 RECORDING_INTERVAL = int(_config.get("DEFAULT", "RECORDING_INTERVAL"))
 RECORDING_FOLDER = Path(_config.get("DEFAULT", "RECORDING_FOLDER"))
 
