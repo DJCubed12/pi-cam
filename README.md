@@ -83,3 +83,13 @@ The server attempts to safely save it's current recording file when shut down. P
 * `/playback.html`
   * Watch recorded mp4 files here.
   * This endpoint takes one URL parameter, `file` which must be an `mp4` filename available in the `recordings/` directory on the Pi itself.
+
+## Note for Honors Project
+
+Admittedly the end project doesn't involve much networking beside's the use to HTTP using Python's built in `HTTPServer`. However, there was more networking involved in the earlier stages of the project.
+
+Up to commit `94398d5`, the entire project was based in Apache. I had to learn more about Apache configuration (including working with the configuration files) and CGI scripts. A particular challenge was to change all response headers to tell browsers to stop caching my webpages!
+
+I struggled a lot with understanding how I can serve a constant feed of live image/video data with Apache. Through research I realized that Apache wasn't really built for that kind of work. I was researching different streaming servers, how they worked, and alternatives to HTTP (TCP/UDP streams) when I stumbled upon [example code](https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py) of livestreaming a Raspberry Pi's Camera feed in Python.
+
+Although this solution is pretty abstracted from the underlying networking, I learned a lot through my tangential research.
