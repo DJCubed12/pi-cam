@@ -84,6 +84,23 @@ The server attempts to safely save it's current recording file when shut down. P
   * Watch recorded mp4 files here.
   * This endpoint takes one URL parameter, `file` which must be an `mp4` filename available in the `recordings/` directory on the Pi itself.
 
+### Configuration
+
+The streaming server has certain variables that can be reconfigured in the `pi-cam.ini` config file. These variables include things like which port to listen on, video resolution, and what duration recording files are split into.
+
+### Source Files
+
+The noteworthy source files are:
+
+* `streaming_server.py`
+  * The "main" file. Sets up the `HTTPServer` and listens for requests.
+* `request_handler.py`
+  * Where HTTP endpoints are defined and implemented.
+* `src/`
+  * _Template_ HTML files. These are files that `request_handler.py` string-interpolates upon request to serve HTML pages.
+* `recorder.py`
+  * Houses the `BackgroundRecorder`: a Thread that can be used to concurrently record the camera's feed while running the server.
+
 ## Note for Honors Project
 
 Admittedly the end project doesn't involve much networking beside's the use to HTTP using Python's built in `HTTPServer`. However, there was more networking involved in the earlier stages of the project.
@@ -92,4 +109,4 @@ Up to commit `94398d5`, the entire project was based in Apache. I had to learn m
 
 I struggled a lot with understanding how I can serve a constant feed of live image/video data with Apache. Through research I realized that Apache wasn't really built for that kind of work. I was researching different streaming servers, how they worked, and alternatives to HTTP (TCP/UDP streams) when I stumbled upon [example code](https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py) of livestreaming a Raspberry Pi's Camera feed in Python.
 
-Although this solution is pretty abstracted from the underlying networking, I learned a lot through my tangential research.
+Although this solution is rather abstracted from the underlying networking, I learned a lot through my tangential research.
