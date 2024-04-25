@@ -39,14 +39,14 @@ class StreamingOutput(BufferedIOBase):
 _config = configparser.ConfigParser()
 _config.read("pi-cam.ini")
 
-PORT = int(_config.get("DEFAULT", "PORT"))
+PORT = _config.getint("DEFAULT", "PORT")
 VIDEO_SIZE = (
-    int(_config.get("DEFAULT", "VIDEO_WIDTH")),
-    int(_config.get("DEFAULT", "VIDEO_HEIGHT")),
+    _config.getint("DEFAULT", "VIDEO_WIDTH"),
+    _config.getint("DEFAULT", "VIDEO_HEIGHT"),
 )
 VERTICAL_FLIP = _config.getboolean("DEFAULT", "VERTICAL_FLIP")
 
-RECORDING_INTERVAL = int(_config.get("DEFAULT", "RECORDING_INTERVAL"))
+RECORDING_INTERVAL = _config.getint("DEFAULT", "RECORDING_INTERVAL")
 RECORDING_FOLDER = Path(_config.get("DEFAULT", "RECORDING_FOLDER"))
 
 _INFO_LOG = Path(_config.get("DEFAULT", "INFO_LOG"))
