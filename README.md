@@ -4,14 +4,18 @@ This is a Raspberry Pi Security Camera streaming server created by Carson Jones.
 
 ## Requirements
 
-Necessary apt packages:
+This project was written specifically for the _Raspberry Pi 4 Model B_ running _Debian GNU/Linux 12 (bookworm)_.
+
+The following apt packages are required (all already installed on _bookworm_):
 
 ```
-libcamera  # Should already be installed for Raspbian OS
+libcamera
 python3
-python3-picamera  # Install with --no-install recommends
+python3-picamera  # Install with --no-install-recommends
 ffmpeg
 ```
+
+This project was made using the _Raspberry Pi Camera Module v1_, however it should work with any Camera/Camera Module compatible with `libcamera`.
 
 ## Python Streaming Server
 
@@ -21,7 +25,7 @@ Run the streaming server and automatic recorder with:
 nohup python streaming_server.py > error.log &
 ```
 
-This will host a website on port `8000` that serves the live camera feed, previously recorded videos, and a viewer for said videos.
+This will host a website on port `8000` (unless changed in `pi-cam.ini`) that serves the live camera feed, previously recorded videos, and a viewer for these videos. The website will be available at `http://<Pi's IP address>:<Port>`.
 
 The automatic recorder within the streaming server saves files to `recordings/`. As this folder will fill up with large files, it is necessary to delete old ones every so often.
 
@@ -69,16 +73,13 @@ The server attempts to safely save it's current recording file when shut down. P
 
 ## Documentation
 
-The server provides the following endpoints:
+### HTTP Endpoints
 
-### `/index.html`
-
-This is the main page. You can view the camera's live feed here.
-
-### `/recordings/index.html`
-
-Pi-Cam constantly records it's output and saves them as mp4 files which are listed here. Listed files have links to take you to their playback pages.
-
-### `/playback.html`
-
-Watch recorded mp4 files here.
+* `/index.html`
+  * This is the main page. You can view the camera's live feed here.
+* `/recordings/index.html`
+  * Pi-Cam constantly records it's output and saves them as mp4 files which are listed here.
+  * Listed files have links to take you to their playback pages.
+* `/playback.html`
+  * Watch recorded mp4 files here.
+  * This endpoint takes one URL parameter, `file` which must be an `mp4` filename available in the `recordings/` directory on the Pi itself.
