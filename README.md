@@ -114,4 +114,4 @@ Up to commit `94398d5`, the entire project was based in Apache. I had to learn m
 
 I struggled a lot with understanding how I can serve a constant feed of live image/video data with Apache. Through research I realized that Apache wasn't really built for that kind of work. I was researching different streaming servers, how they worked, and alternatives to HTTP (TCP/UDP streams) when I stumbled upon [example code](https://github.com/raspberrypi/picamera2/blob/main/examples/mjpeg_server.py) of livestreaming a Raspberry Pi's Camera feed in Python.
 
-Although this solution is rather abstracted from the underlying networking, I learned a lot through my tangential research.
+Although this solution is rather abstracted from the underlying networking, I learned a lot through my tangential research. I even got as far as learning how DHCP is used to set local domain names and how you can use technologies like `dhcpcd` to get a (locally) static IP address from your router (although I never got that fully working).
